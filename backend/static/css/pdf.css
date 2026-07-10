@@ -1,0 +1,337 @@
+
+body {
+  font-family: 'Calibri', sans-serif;
+}
+
+.footer {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12px;
+    /* Ensure the footer content is within the bottom margin area */
+    margin-bottom: 1cm; /* Adjust as needed to fit */
+}
+
+@media screen {
+  .footer {
+    display: none; /* Explicitly hide the footer for screen if not already hidden */
+  }
+}
+
+@media print {
+  #printExclude {
+    display: none;
+  }
+
+  .footer {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12px;
+    margin-bottom: 1cm; /* Adjust as needed for the PDF */
+    }
+}
+
+@page {
+  /* Ensure there's space for the footer */
+  margin: 1cm 1cm 0.1cm;
+}
+
+.page-break {
+  page-break-before: always !important;
+}
+
+.full-width-table {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  border-collapse: collapse;
+  table-layout: fixed; /* Ensures that columns have equal width */
+}
+
+.full-width-table, .full-width-table td {
+  border: none; /* Ensures no borders are shown on the table and cells */
+}
+
+.top-cell, .logo-cell {
+  width: 50%; /* Ensures both cells have the same width */
+  text-align: left; /* Aligns text in the first cell to the left */
+}
+
+.logo-cell {
+  text-align: right; /* Aligns the image in the second cell to the right */
+}
+
+.right-aligned-logo {
+  max-width: 100%;
+  height: auto;
+}
+
+.info-cell-company {
+  width: 250px;
+  padding-top: 15px;
+}
+
+.info-cell {
+  width: calc(100% - 250px);
+  padding-top: 15px;
+}
+
+.supplier-customer-company-info {
+  color: black;
+  font-size: 14px;
+  text-align: start !important;
+}
+
+.reference-cell {
+  max-width: 100%;
+  padding-top: 10px;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: start;
+}
+.reference-info-cell, .loading-info-cell {
+  max-width: 100%;
+  font-size: 14px;
+  text-align: start;
+}
+
+.table-product {
+  width: 100%;
+  margin-top: 40px;
+  box-sizing: border-box;
+  table-layout: fixed; /* Ensures that columns have equal width */
+  border-collapse: collapse; /* Removes the space between borders */
+}
+
+.table-product thead {
+  border-top: thin solid black;
+  border-bottom: thin solid black;
+}
+
+.td-product-border {
+  padding: 3px;
+}
+
+.product-cell-big {
+  width: 20%;
+  font-size: 12px;
+  text-align: start;
+}
+
+.product-cell-small {
+  width: 20%;
+  font-size: 12px;
+  text-align: center;
+}
+
+.product-cell-x-small {
+  width: 15%;
+  font-size: 12px;
+  text-align: center;
+}
+
+.product-cell-small-end {
+  width: 20%;
+  font-size: 12px;
+  text-align: end;
+}
+
+.quantity-symbol {
+  font-size: 10px;
+}
+
+.table-transport {
+  width: 100%; /* Ensure the table spans the full width of its container */
+  table-layout: fixed; /* Use fixed layout for equal column widths */
+  border-collapse: collapse; /* Optional: collapses border between cells */
+  margin-top: 5px;
+  box-sizing: border-box;
+  padding: 5px;
+}
+
+.table-transport th, .table-transport td {
+  width: 14.29%; /* Divide 100% by the number of columns to get equal width */
+}
+
+.transport-cell-start {
+  font-size: 14px;
+  text-align: start;
+}
+
+.transport-cell-end {
+  font-size: 14px;
+  text-align: end;
+}
+
+.transport-cell {
+  font-size: 14px;
+  text-align: center;
+}
+
+.table-transport thead {
+  border-top: thin solid black;
+  border-bottom: thin solid black;
+}
+
+.transport-pallets-title-table {
+  width: 100%;
+  padding: 5px;
+  margin-top: 40px;
+  box-sizing: border-box;
+  border-collapse: collapse;
+  table-layout: fixed; /* Ensures that columns have equal width */
+}
+
+.transport-pallets-title-cell {
+  width: 100%;
+  font-size: 14px;
+  text-align: start;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.table-pallets {
+  width: 100%; /* Ensure the table spans the full width of its container */
+  table-layout: fixed; /* Use fixed layout for equal column widths */
+  border-collapse: collapse; /* Optional: collapses border between cells */
+  margin-top: 5px;
+  box-sizing: border-box;
+  padding: 5px;
+}
+
+.table-pallets thead {
+  border-top: thin solid black;
+  border-bottom: thin solid black;
+}
+
+.pallet-cell-start {
+  font-size: 14px;
+  text-align: start;
+  width: 20%;
+}
+
+.pallet-cell-end {
+  font-size: 14px;
+  text-align: end;
+  width: 20%;
+}
+
+.pallet-cell {
+  font-size: 14px;
+  text-align: center;
+  width: 20%;
+}
+
+.pallet-cell-big {
+  font-size: 14px;
+  text-align: start;
+  width: 40%;
+}
+
+.table-total {
+  width: 100%;
+  margin-top: 40px;
+  box-sizing: border-box;
+  table-layout: fixed; /* Ensures that columns have equal width */
+  border-collapse: collapse; /* Removes the space between borders */
+}
+
+.total-cell {
+  font-size: 14px;
+  text-align: end;
+  width: 20%;
+}
+
+.total-cell-big {
+  font-size: 14px;
+  text-align: end;
+  width: 80%;
+}
+
+.total-last-cell {
+  font-size: 22px;
+  font-weight: bolder;
+  text-align: end;
+  width: 20%;
+  padding-top: 40px;
+}
+
+.total-last-cell-big {
+  font-size: 22px;
+  text-align: end;
+  width: 80%;
+  padding-top: 40px;
+}
+
+
+
+.table-commission {
+  width: 100%;
+  box-sizing: border-box;
+  border-collapse: collapse;
+  table-layout: fixed; /* Ensures that columns have equal width */
+}
+
+.total-last-commission-cell {
+  font-size: 20px;
+  font-weight: bolder;
+  text-align: end;
+  width: 20%;
+}
+
+.total-last-commission-cell-big {
+  font-size: 20px;
+  text-align: end;
+  width: 80%;
+}
+
+.button-print {
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 5px;
+  background-color: black;
+  border: 1px solid black;
+  border-radius: 5px;
+}
+
+.button-print:hover, .button-print:active {
+  background-color: #008170 !important;
+}
+
+.note-cell {
+  width: 100%;
+  font-size: 12px;
+  text-align: start;
+}
+
+.note-title-cell {
+  width: 100%;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: start;
+  text-transform: uppercase;
+  border-bottom: 1px solid black;
+}
+
+.note-table {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  table-layout: fixed; /* Ensures that columns have equal width */
+}
+
+.fw-bold {
+  font-weight: bold;
+}
+
+.fst-italic {
+  font-style: italic;
+}

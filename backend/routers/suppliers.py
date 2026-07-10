@@ -49,7 +49,7 @@ def get_supplier_details(supplier_id: UUID, db: Session = Depends(get_db)):
     db_supplier = db.query(SupplierModel).options(joinedload(SupplierModel.loading_addresses)).filter(SupplierModel.supplier_id==supplier_id).first()
 
     if not db_supplier:
-        raise HTTPException(status_code=404, detail="Supplier not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Supplier not found")
 
     return db_supplier
 
@@ -80,7 +80,7 @@ def create_supplier(supplier_data: SupplierCreate, db: Session = Depends(get_db)
 def update_supplier(supplier_id: UUID, supplier_update: SupplierUpdate, db: Session = Depends(get_db)):
     db_supplier = db.query(SupplierModel).filter(SupplierModel.id == supplier_id).first()
     if not db_supplier:
-        raise HTTPException(status_code=404, detail="Supplier not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Supplier not found")
 
     update_data = supplier_update.model_dump(exclude_unset=True, exclude={'loading_addresses'})
 
@@ -109,7 +109,7 @@ def delete_supplier(supplier_id: UUID, db: Session = Depends(get_db)):
     """Replaces Django DeleteSupplierView"""
     db_supplier = db.query(SupplierModel).filter(SupplierModel.id == supplier_id).first()
     if not db_supplier:
-        raise HTTPException(status_code=404, detail="Supplier not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Supplier not found")
 
     db.delete(db_supplier)
     db.commit()

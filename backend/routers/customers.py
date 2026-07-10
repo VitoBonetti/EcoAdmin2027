@@ -1,10 +1,7 @@
-import io
-from datetime import datetime
 from uuid import UUID
 from typing import List, Optional
 from fastapi import HTTPException, APIRouter, Depends, status, Query
-from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from database import get_db
 from schema import (
@@ -36,7 +33,7 @@ def create_customer(customer: CustomerModelCreate, db: Session = Depends(get_db)
 def update_customer(customer_id: UUID, customer_update: CustomerModelUpdate, db: Session = Depends(get_db)):
     db_customer = db.query(CustomerModel).filter(CustomerModel.id == customer_id).first()
     if not db_customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
 
     update_data = customer_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -51,7 +48,7 @@ def update_customer(customer_id: UUID, customer_update: CustomerModelUpdate, db:
 def delete_customer(customer_id: UUID, db: Session = Depends(get_db)):
     db_customer = db.query(CustomerModel).filter(CustomerModel.id == customer_id).first()
     if not db_customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     db.delete(db_customer)
     db.commit()
 
@@ -61,7 +58,7 @@ def delete_customer(customer_id: UUID, db: Session = Depends(get_db)):
 def get_customer_details(customer_id: UUID, db: Session = Depends(get_db)):
     db_customer = db.query(CustomerModel).filter(CustomerModel.id == customer_id).first()
     if not db_customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     return db_customer
 
 
