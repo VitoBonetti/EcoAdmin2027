@@ -1,6 +1,7 @@
 import uuid
 from sqlalchemy import Column, String,  Boolean
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from database import Base
 
 
@@ -20,3 +21,5 @@ class CustomerModel(Base):
     bankaccountname = Column(String(80), nullable=True)
     iban = Column(String(34), nullable=True)
     is_active = Column(Boolean, default=True)
+
+    entries = relationship("EntryModel", back_populates="customer")

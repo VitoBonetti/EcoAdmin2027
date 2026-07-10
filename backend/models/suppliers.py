@@ -23,6 +23,7 @@ class SupplierModel(Base):
     is_active = Column(Boolean, default=True)
 
     loading_addresses = relationship("LoadingAddressModel", back_populates="supplier")
+    entries = relationship("EntryModel", back_populates="supplier")
 
 
 class LoadingAddressModel(Base):
@@ -36,4 +37,5 @@ class LoadingAddressModel(Base):
     nation = Column(String(100), nullable=True)
 
     supplier = relationship("SupplierModel", back_populates="loading_addresses")
+    entries = relationship("EntryModel", back_populates="loading_addresses")
 
