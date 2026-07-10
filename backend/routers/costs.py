@@ -23,7 +23,7 @@ from models.costs import CategoryModel, DescriptionModel, CostModel
 from middleware.auth import get_current_user
 
 router = APIRouter(
-    prefix="/api",
+    prefix="/costs",
     tags=["Costs"],
     dependencies=[Depends(get_current_user)]
 )
@@ -34,6 +34,7 @@ router = APIRouter(
 @router.get("/categories/", response_model=List[CategoryModelResponse])
 def list_categories(db: Session = Depends(get_db)):
     return db.query(CategoryModel).order_by(CategoryModel.category).all()
+
 
 @router.get("/categories/autocomplete/")
 def autocomplete_categories(q: str = "", db: Session = Depends(get_db)):
@@ -154,7 +155,7 @@ def delete_description(description_id: UUID, db: Session = Depends(get_db)):
 # COST ENDPOINTS
 # ==========================================
 
-@router.get("/costs/", response_model=List[CostModelResponse])
+@router.get("/", response_model=List[CostModelResponse])
 def list_costs(
         category_id: Optional[UUID] = None,
         description_id: Optional[UUID] = None,
@@ -170,14 +171,14 @@ def list_costs(
     return query.order_by(CostModel.cost_date.desc()).all()
 
 
-@router.get("/costs/archived/", response_model=List[CostModelResponse])
+@router.get("/archived/", response_model=List[CostModelResponse])
 def list_archived_costs(db: Session = Depends(get_db)):
     return db.query(CostModel).filter(
         CostModel.is_archived == True
     ).order_by(CostModel.cost_date.desc()).all()
 
 
-@router.get("/costs/totals/")
+@router.get("/totals/")
 def get_cost_totals(db: Session = Depends(get_db)):
     """Replicates the total aggregation logic from the Django view"""
     totals = db.query(
@@ -196,7 +197,7 @@ def get_cost_totals(db: Session = Depends(get_db)):
     }
 
 
-@router.post("/costs/", response_model=CostModelResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=CostModelResponse, status_code=status.HTTP_201_CREATED)
 def create_cost(cost: CostModelCreate, db: Session = Depends(get_db)):
     new_cost = CostModel(**cost.model_dump())
     db.add(new_cost)
@@ -205,7 +206,7 @@ def create_cost(cost: CostModelCreate, db: Session = Depends(get_db)):
     return new_cost
 
 
-@router.patch("/costs/{cost_id}", response_model=CostModelResponse)
+@router.patch("/{cost_id}", response_model=CostModelResponse)
 def update_cost(cost_id: UUID, cost_update: CostModelUpdate, db: Session = Depends(get_db)):
     db_cost = db.query(CostModel).filter(CostModel.id == cost_id).first()
     if not db_cost:
@@ -220,7 +221,7 @@ def update_cost(cost_id: UUID, cost_update: CostModelUpdate, db: Session = Depen
     return db_cost
 
 
-@router.delete("/costs/{cost_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{cost_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_cost(cost_id: UUID, db: Session = Depends(get_db)):
     db_cost = db.query(CostModel).filter(CostModel.id == cost_id).first()
     if not db_cost:
@@ -229,7 +230,7 @@ def delete_cost(cost_id: UUID, db: Session = Depends(get_db)):
     db.commit()
 
 
-@router.patch("/costs/{cost_id}/archive", response_model=CostModelResponse)
+@router.patch("/{cost_id}/archive", response_model=CostModelResponse)
 def toggle_archive_cost(cost_id: UUID, db: Session = Depends(get_db)):
     db_cost = db.query(CostModel).filter(CostModel.id == cost_id).first()
     if not db_cost:
@@ -245,7 +246,7 @@ def toggle_archive_cost(cost_id: UUID, db: Session = Depends(get_db)):
 # EXCEL EXPORT
 # ==========================================
 
-@router.get("/costs/export/excel")
+@router.get("/export/excel")
 def export_costs_excel(db: Session = Depends(get_db)):
     wb = openpyxl.Workbook()
     ws = wb.active
