@@ -17,25 +17,25 @@ class EntryModel(Base):
     customer_id = Column(UUID(as_uuid=True), ForeignKey('customers.id', ondelete='SET NULL'), nullable=True)
     supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id', ondelete='SET NULL'), nullable=True)
     loading_address = Column(UUID(as_uuid=True), ForeignKey('loading_addresses.id', ondelete='SET NULL'), nullable=True)
-    quotation_reference = Column(String(11), nullable=True, unique=True, editable=False)
-    invoice_reference = Column(String(11), nullable=True, unique=True, editable=False)
+    quotation_reference = Column(String(11), nullable=True, unique=True)
+    invoice_reference = Column(String(11), nullable=True, unique=True)
     is_invoice = Column(Boolean, nullable=True, default=False)
     is_commission = Column(Boolean, nullable=True, default=False)
     is_quotation = Column(Boolean, nullable=True, default=False)
     is_paid = Column(Boolean, nullable=True, default=False)
     pallets_quantity = Column(Integer, nullable=True, default=0)
     pallets_price = Column(Numeric(10, 2), default=0, nullable=True)
-    pallets_total_price = Column(Numeric(10, 2), default=0, editable=False, nullable=True)
+    pallets_total_price = Column(Numeric(10, 2), default=0, nullable=True)
     pallets_notes = Column(String(500), nullable=True)
     transport_gross = Column(Integer, nullable=True, default=0)
-    transport_bereken = Column(Integer, nullable=True, default=0, editable=False)
+    transport_bereken = Column(Integer, nullable=True, default=0)
     transport_price_for_ton = Column(Numeric(10, 2), default=0, nullable=True)
     transport_diesel_toeslag = Column(Integer, default=0, nullable=True)  #
     transport_extra_stop = Column(Integer, default=0, nullable=True)  #
     transport_extra_stop_cost = Column(Numeric(10, 2), default=0, nullable=True)
-    transport_total_no_btw = Column(Numeric(10, 2), default=0, nullable=True, editable=False)
-    transport_total_btw = Column(Numeric(10, 2), default=0, nullable=True, editable=False)
-    temp_no_btw_total = Column(Numeric(10, 2), default=0, nullable=True, editable=False)
+    transport_total_no_btw = Column(Numeric(10, 2), default=0, nullable=True)
+    transport_total_btw = Column(Numeric(10, 2), default=0, nullable=True)
+    temp_no_btw_total = Column(Numeric(10, 2), default=0, nullable=True)
     no_btw_total = Column(Numeric(10, 2), default=0, nullable=True)
     btw_total = Column(Numeric(10, 2), default=0, nullable=True)
     discount = Column(Integer, default=0, nullable=True)  #
@@ -52,7 +52,7 @@ class EntryModel(Base):
     customer = relationship("CustomerModel", back_populates="entries")
     supplier = relationship("SupplierModel", back_populates="entries")
     loading_addresses = relationship("LoadingAddressModel", back_populates="entries")
-    entry_products = relationship("EntryProductModel", back_populates="entries")
+    entry_products = relationship("EntryProductsModel", back_populates="entries")
 
     def update_trasport_bereken(self):
         if self.transport_gross is None:
