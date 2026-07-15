@@ -53,15 +53,6 @@ def delete_customer(customer_id: UUID, db: Session = Depends(get_db)):
     db.commit()
 
 
-
-@router.get("/{customer_id}", response_model=CustomerModelResponse)
-def get_customer_details(customer_id: UUID, db: Session = Depends(get_db)):
-    db_customer = db.query(CustomerModel).filter(CustomerModel.id == customer_id).first()
-    if not db_customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
-    return db_customer
-
-
 @router.get("/search", response_model=CustomerSearchResponse)
 def search_customers(
         q: Optional[str] = Query(None, description="Search query string"),
@@ -93,3 +84,11 @@ def search_customers(
         "customers": customers,
         "count": len(customers)
     }
+
+
+@router.get("/{customer_id}", response_model=CustomerModelResponse)
+def get_customer_details(customer_id: UUID, db: Session = Depends(get_db)):
+    db_customer = db.query(CustomerModel).filter(CustomerModel.id == customer_id).first()
+    if not db_customer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+    return db_customer
