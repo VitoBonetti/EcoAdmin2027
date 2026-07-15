@@ -36,7 +36,7 @@ def create_company(company: MyCompanyModelCreate, db: Session = Depends(get_db))
 def update_company(company_id: UUID, company_update: MyCompanyModelUpdate, db: Session = Depends(get_db)):
     db_company = db.query(MyCompanyModel).filter(MyCompanyModel.id == company_id).first()
     if not db_company:
-        raise HTTPException(status_code=404, detail="Company not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
 
     update_data = company_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -51,7 +51,7 @@ def update_company(company_id: UUID, company_update: MyCompanyModelUpdate, db: S
 def delete_company(company_id: UUID, db: Session = Depends(get_db)):
     db_company = db.query(MyCompanyModel).filter(MyCompanyModel.id == company_id).first()
     if not db_company:
-        raise HTTPException(status_code=404, detail="Company not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
     db.delete(db_company)
     db.commit()
 
@@ -60,6 +60,6 @@ def delete_company(company_id: UUID, db: Session = Depends(get_db)):
 def get_company_details(company_id: UUID, db: Session = Depends(get_db)):
     db_company = db.query(MyCompanyModel).filter(MyCompanyModel.id == company_id).first()
     if not db_company:
-        raise HTTPException(status_code=404, detail="Company not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
     return db_company
 

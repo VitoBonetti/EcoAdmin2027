@@ -110,3 +110,76 @@ def create_entry_transaction(db: Session, entry_in: dict, products_in: list[dict
     db.commit()
     db.refresh(new_entry)
     return new_entry
+
+
+def update_entry_transaction(db: Session, entry_id: str, entry_in: dict, products_in: list[dict] | None) -> EntryModel:
+    """
+    Updates an existing entry and synchronizes its nested products.
+    """
+    # Fetch the existing entry
+    db_entry = db.query(EntryModel).filter(EntryModel.id == entry_id).first()
+    if not db_entry:
+        return None
+
+    # Update the parent entry's basic fields
+    for key, value in entry_in.items():
+        setattr(db_entry, key, value)
+
+    # Handle Nested Products (if they are provided in the payload)
+    if products_in is not None:
+        existing_products = {str(p.id): p for p in
+                             db.query(EntryProductsModel).filter(EntryProductsModel.entry_id == entry_id).all()}
+        incoming_ids = set()
+
+        # We need a unified list of product dictionaries to pass to the math function
+        final_products_data = []
+
+        for prod_data in products_in:
+            prod_id = str(prod_data.get('id')) if prod_data.get('id') else None
+
+            if prod_id and prod_id in existing_products:
+                # Update existing product
+                db_prod = existing_products[prod_id]
+                incoming_ids.add(prod_id)
+
+                # Apply updates to the model
+                for k, v in prod_data.items():
+                    if k != 'id':
+                        setattr(db_prod, k, v)
+
+                # Convert back to dict for the math calculator
+                final_products_data.append({c.name: getattr(db_prod, c.name) for c in db_prod.__table__.columns})
+
+            else:
+                # It's a brand new product added during the edit
+                # Remove the empty ID if it exists so SQLAlchemy generates a new one
+                if 'id' in prod_data:
+                    del prod_data['id']
+                final_products_data.append(prod_data)
+
+        # Delete any products that were removed in the frontend
+        for old_id, old_prod in existing_products.items():
+            if old_id not in incoming_ids:
+                db.delete(old_prod)
+
+        # Rerun all the math calculations using the updated/new products
+        # We convert db_entry to a dictionary to pass it to our pure math function
+        entry_dict = {c.name: getattr(db_entry, c.name) for c in db_entry.__table__.columns}
+        updated_entry_dict, calculated_products = calculate_entry_math(entry_dict, final_products_data)
+
+        # Apply the newly calculated totals back to the DB model
+        for key in ['no_btw_total', 'btw_total', 'final_total', 'temp_no_btw_total', 'transport_total_no_btw',
+                    'transport_bereken', 'pallets_total_price', 'overdue_date']:
+            if key in updated_entry_dict:
+                setattr(db_entry, key, updated_entry_dict[key])
+
+        # Add the brand new products to the DB
+        for calc_prod in calculated_products:
+            if 'id' not in calc_prod:  # Only the newly added ones won't have IDs yet
+                new_db_prod = EntryProductsModel(**calc_prod, entry_id=db_entry.id)
+                db.add(new_db_prod)
+
+    # commit the transaction
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry

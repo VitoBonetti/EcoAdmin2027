@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Dict
 from uuid import UUID
 from datetime import datetime, date
 from decimal import Decimal
@@ -215,7 +215,7 @@ class LoadingAddressCreate(LoadingAddressBase):
 
 
 class LoadingAddressUpdate(LoadingAddressBase):
-    id: Optional[UUID] = None  # Include ID so we know which one to update if needed
+    id: Optional[UUID] = None
 
 
 class LoadingAddressResponse(LoadingAddressBase):
@@ -397,3 +397,18 @@ class EntryProductModelResponse(EntryProductModelBase):
 
     class Config:
         from_attributes = True
+
+
+class EntryDetailContextResponse(BaseModel):
+    entry: EntryModelResponse
+    products: List[EntryProductModelResponse]
+    btw_calc: Decimal
+    total_discount: Decimal
+    transport: Dict[str, Any]
+    algemene: Dict[str, str]
+
+
+class EntryFormDataResponse(BaseModel):
+    companies: List[MyCompanyModelResponse]
+    customers: List[CustomerModelResponse]
+    suppliers: List[SupplierResponse]

@@ -61,7 +61,7 @@ def create_category(category: CategoryModelCreate, db: Session = Depends(get_db)
 def update_category(category_id: UUID, category_update: CategoryModelUpdate, db: Session = Depends(get_db)):
     db_category = db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
     if not db_category:
-        raise HTTPException(status_code=404, detail="Category not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
     update_data = category_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -76,7 +76,7 @@ def update_category(category_id: UUID, category_update: CategoryModelUpdate, db:
 def delete_category(category_id: UUID, db: Session = Depends(get_db)):
     db_category = db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
     if not db_category:
-        raise HTTPException(status_code=404, detail="Category not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     db.delete(db_category)
     db.commit()
 
@@ -94,7 +94,7 @@ def list_descriptions(db: Session = Depends(get_db)):
 def get_description(description_id: UUID, db: Session = Depends(get_db)):
     db_desc = db.query(DescriptionModel).filter(DescriptionModel.id == description_id).first()
     if not db_desc:
-        raise HTTPException(status_code=404, detail="Description not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Description not found")
     return db_desc
 
 
@@ -131,7 +131,7 @@ def update_description(description_id: UUID, desc_update: DescriptionModelUpdate
                        db: Session = Depends(get_db)):
     db_desc = db.query(DescriptionModel).filter(DescriptionModel.id == description_id).first()
     if not db_desc:
-        raise HTTPException(status_code=404, detail="Description not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Description not found")
 
     update_data = desc_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -146,7 +146,7 @@ def update_description(description_id: UUID, desc_update: DescriptionModelUpdate
 def delete_description(description_id: UUID, db: Session = Depends(get_db)):
     db_desc = db.query(DescriptionModel).filter(DescriptionModel.id == description_id).first()
     if not db_desc:
-        raise HTTPException(status_code=404, detail="Description not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Description not found")
     db.delete(db_desc)
     db.commit()
 
@@ -210,7 +210,7 @@ def create_cost(cost: CostModelCreate, db: Session = Depends(get_db)):
 def update_cost(cost_id: UUID, cost_update: CostModelUpdate, db: Session = Depends(get_db)):
     db_cost = db.query(CostModel).filter(CostModel.id == cost_id).first()
     if not db_cost:
-        raise HTTPException(status_code=404, detail="Cost not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
 
     update_data = cost_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -225,16 +225,16 @@ def update_cost(cost_id: UUID, cost_update: CostModelUpdate, db: Session = Depen
 def delete_cost(cost_id: UUID, db: Session = Depends(get_db)):
     db_cost = db.query(CostModel).filter(CostModel.id == cost_id).first()
     if not db_cost:
-        raise HTTPException(status_code=404, detail="Cost not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
     db.delete(db_cost)
     db.commit()
 
 
-@router.patch("/{cost_id}/archive", response_model=CostModelResponse)
+@router.patch("/{cost_id}/archive-state/", response_model=CostModelResponse)
 def toggle_archive_cost(cost_id: UUID, db: Session = Depends(get_db)):
     db_cost = db.query(CostModel).filter(CostModel.id == cost_id).first()
     if not db_cost:
-        raise HTTPException(status_code=404, detail="Cost not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
 
     db_cost.is_archived = not db_cost.is_archived
     db.commit()
