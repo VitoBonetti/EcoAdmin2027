@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Customers from './pages/Customers';
 import Layout from './components/Layout';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
@@ -32,7 +33,7 @@ export default function App() {
           <Route path="costs/categories" element={<DummyPage title="Cost Categories" />} />
           <Route path="costs/descriptions" element={<DummyPage title="Cost Descriptions" />} />
           <Route path="entries" element={<DummyPage title="Entries" />} />
-          <Route path="customers" element={<DummyPage title="Customers" />} />
+          <Route path="customers" element={<Customers />} />
           <Route path="suppliers" element={<DummyPage title="Suppliers" />} />
           <Route path="company" element={<DummyPage title="My Company" />} />
           <Route path="users" element={<DummyPage title="Users Management" />} />

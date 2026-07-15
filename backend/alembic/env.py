@@ -9,6 +9,10 @@ from database import Base, SQLALCHEMY_DB_URI
 
 from models.costs import CategoryModel, DescriptionModel, CostModel
 from models.users import UserModel, TokenBlocklist
+from models.customers import CustomerModel
+from models.suppliers import SupplierModel, LoadingAddressModel
+from models.company import MyCompanyModel
+from models.entries import EntryModel, EntryProductsModel
 
 
 print("\n--- ALEMBIC DEBUG ---")
