@@ -4,6 +4,9 @@ import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import Suppliers from './pages/Suppliers'
 import MyCompany from './pages/MyCompany';
+import Categories from './pages/costs/Categories';
+import Descriptions from './pages/costs/Descriptions';
+import Costs from './pages/costs/Costs';
 import Layout from './components/Layout';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
@@ -31,9 +34,9 @@ export default function App() {
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="costs" element={<DummyPage title="All Costs" />} />
-          <Route path="costs/categories" element={<DummyPage title="Cost Categories" />} />
-          <Route path="costs/descriptions" element={<DummyPage title="Cost Descriptions" />} />
+          <Route path="costs" element={<Costs />} />
+          <Route path="costs/categories" element={<Categories />} />
+          <Route path="costs/descriptions" element={<Descriptions />} />
           <Route path="entries" element={<DummyPage title="Entries" />} />
           <Route path="customers" element={<Customers />} />
           <Route path="suppliers" element={<Suppliers />} />

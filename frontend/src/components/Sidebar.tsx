@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Wallet, FileText, Users, Truck, Building2, ShieldCheck, Sun, Moon, Monitor, LogOut, Settings } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 
@@ -14,15 +14,14 @@ export default function Sidebar() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation(); // Used to keep the Wallet icon active
 
-  // Fetch Real User Data
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
       try {
-        // Decode the JWT to get the user ID (stored in 'sub')
         const payload = JSON.parse(atob(token.split('.')[1]));
         const userId = payload.sub;
 
@@ -41,7 +40,6 @@ export default function Sidebar() {
     fetchUser();
   }, []);
 
-  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
@@ -91,15 +89,45 @@ export default function Sidebar() {
     </div>
   );
 
+  const isCostsActive = location.pathname.startsWith('/costs');
+
   return (
     <aside
       ref={sidebarRef}
-      // Floating Sidebar Classes (detached from edges, rounded)
       className="fixed right-4 top-4 h-[calc(100vh-2rem)] w-16 flex flex-col justify-between py-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-white/80 dark:border-gray-700/50 rounded-2xl shadow-lg z-40 shrink-0"
     >
       <nav className="flex flex-col items-center gap-4 w-full">
         <NavItem icon={Home} to="/dashboard" tooltip="Dashboard" />
-        <NavItem icon={Wallet} to="/costs" tooltip="Costs" />
+
+        {/* Costs Submenu Item */}
+        <div className="relative group w-full flex justify-center">
+          <button
+            onClick={() => toggleMenu('costs')}
+            className={`p-3 rounded-xl transition-all duration-200 ${
+              isCostsActive || openMenu === 'costs'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shadow-sm'
+                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+            }`}
+          >
+            <Wallet size={22} strokeWidth={1.5} />
+          </button>
+
+          {openMenu !== 'costs' && (
+            <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap dark:bg-gray-700 z-50">
+              Costs Menu
+            </div>
+          )}
+
+          {openMenu === 'costs' && (
+            <div className="absolute right-full mr-4 top-0 w-48 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-xl py-2 z-50 overflow-hidden">
+              <div className="px-3 pb-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">Costs</div>
+              <NavLink to="/costs" end onClick={() => setOpenMenu(null)} className={({isActive}) => `block px-4 py-2 text-sm transition-colors ${isActive ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400'}`}>All Costs</NavLink>
+              <NavLink to="/costs/categories" onClick={() => setOpenMenu(null)} className={({isActive}) => `block px-4 py-2 text-sm transition-colors ${isActive ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400'}`}>Categories</NavLink>
+              <NavLink to="/costs/descriptions" onClick={() => setOpenMenu(null)} className={({isActive}) => `block px-4 py-2 text-sm transition-colors ${isActive ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400'}`}>Descriptions</NavLink>
+            </div>
+          )}
+        </div>
+
         <NavItem icon={FileText} to="/entries" tooltip="Entries" />
         <NavItem icon={Users} to="/customers" tooltip="Customers" />
         <NavItem icon={Truck} to="/suppliers" tooltip="Suppliers" />

@@ -137,17 +137,17 @@ class CostModelBase(BaseModel):
     category_id: UUID
     description_id: UUID
     euro_amount: float
-    amount_no_btw: Optional[float]
-    amount_btw: Optional[float]
-    btw_percent: Optional[float]
+    amount_no_btw: Optional[float]= None
+    amount_btw: Optional[float]= None
+    btw_percent: Optional[float]= None
     is_credit: bool = False
-    cost_note: Optional[str]
-    supplier: Optional[str]
-    invoice_nmb: Optional[str]
-    ai_summary: Optional[str]
-    year_reference: Optional[int]
-    quarter_reference: Optional[str]
-    file_name: Optional[str]
+    cost_note: Optional[str]= None
+    supplier: Optional[str]= None
+    invoice_nmb: Optional[str]= None
+    ai_summary: Optional[str]= None
+    year_reference: Optional[int]= None
+    quarter_reference: Optional[str]= None
+    file_name: Optional[str]= None
     is_archived: bool = False
 
 class CostModelCreate(CostModelBase):

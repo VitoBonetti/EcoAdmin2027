@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, ForeignKey, Boolean,  Integer, Float, DateTime
+from sqlalchemy import Column, String, ForeignKey, Boolean,  Integer, Float, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from database import Base
@@ -30,7 +30,7 @@ class CostModel(Base):
     __tablename__ = "costs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    cost_date = Column(DateTime, nullable=False)
+    cost_date = Column(Date, nullable=False)
     category_id = Column(UUID(as_uuid=True), ForeignKey('categories_cost.id'), nullable=False)
     description_id = Column(UUID(as_uuid=True), ForeignKey('descriptions_cost.id'), nullable=False)
     euro_amount = Column(Float, nullable=False)
