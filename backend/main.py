@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import traceback
 import os
 import time
@@ -23,6 +24,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount the static directory so Jinja2 templates can find the CSS files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Global Error Handler
 @app.exception_handler(Exception)

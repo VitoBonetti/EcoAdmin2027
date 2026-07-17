@@ -328,11 +328,11 @@ def download_entry_pdf(entry_id: UUID, request: Request, db: Session = Depends(g
     }
 
     algemene = {
-        "algemene_title": "Your Title",
-        "algemene_offerte": "Your Offerte",
-        "algemene_invoice": "Your Invoice",
-        "algemene_commission": "Your Commission",
-        "footer_text": "Your Footer"
+        "algemene_title": ALGEMENE_TITLE,
+        "algemene_offerte": ALGEMENE_OFFERTE,
+        "algemene_invoice": ALGEMENE_INVOICE,
+        "algemene_commission": ALGEMENE_COMMISSION,
+        "footer_text": FOOTER_TEXT
     }
 
     # Prepare context for Jinja2 (FastAPI requires the 'request' object in the context)
@@ -347,7 +347,7 @@ def download_entry_pdf(entry_id: UUID, request: Request, db: Session = Depends(g
     }
 
     # Render the HTML to a string
-    html_content = templates.TemplateResponse("invoice_pdf.html", context).body
+    html_content = templates.TemplateResponse(request=request, name="invoice_pdf.html", context=context).body
 
     # Convert the HTML string to a PDF byte string using WeasyPrint
     pdf_bytes = weasyprint.HTML(string=html_content.decode('utf-8')).write_pdf()

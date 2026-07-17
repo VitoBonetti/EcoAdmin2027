@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, ArrowUpDown, Check, ChevronLeft, ChevronRight, FileText, Download, Archive, ArrowUpRight } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowUpDown, Check, ChevronLeft, ChevronRight, FileText, Download, Archive, ArrowUpRight, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import EntryFormModal from '../../components/modals/EntryFormModal';
+import EntryViewModal from '../../components/modals/EntryViewModal';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -18,6 +19,9 @@ export default function Entries() {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [viewEntryId, setViewEntryId] = useState<string | null>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -280,8 +284,7 @@ export default function Entries() {
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => handleDownloadPDF(entry.id, entry.invoice_reference || entry.quotation_reference)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="Download PDF"><Download size={16} /></button>
                         <button onClick={() => handleToggleArchive(entry.id)} className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-gray-800 rounded-lg tooltip" title={entry.is_archived ? "Unarchive" : "Archive"}><Archive size={16} /></button>
-                        <button onClick={() => { setFormEntry(entry); setIsFormOpen(true); }} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="Edit Entry"><Edit2 size={16} /></button>
-                        <button onClick={() => setDeleteIds([entry.id])} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="Delete"><Trash2 size={16} /></button>
+                        <button onClick={() => { setViewEntryId(entry.id); setIsViewOpen(true); }} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="View Details"><Eye size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -311,8 +314,16 @@ export default function Entries() {
       )}
 
       <ConfirmModal isOpen={deleteIds.length > 0} title={deleteIds.length > 1 ? "Bulk Delete" : "Delete Entry"} message={`Are you sure you want to delete ${deleteIds.length} document(s)?`} onConfirm={handleBulkDelete} onClose={() => setDeleteIds([])} />
-
       <EntryFormModal isOpen={isFormOpen} entryItem={formEntry} onClose={() => setIsFormOpen(false)} onSuccess={fetchEntries} customers={customers} suppliers={suppliers} companies={companies} />
+      <EntryViewModal
+        isOpen={isViewOpen}
+        entryId={viewEntryId}
+        onClose={() => setIsViewOpen(false)}
+        onEdit={(entryData) => {
+          setFormEntry(entryData);
+          setIsFormOpen(true);
+        }}
+      />
     </div>
   );
 }
