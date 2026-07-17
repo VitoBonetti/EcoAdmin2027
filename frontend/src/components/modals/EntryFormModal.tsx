@@ -85,11 +85,8 @@ export default function EntryFormModal({ isOpen, entryItem, onClose, onSuccess, 
   useEffect(() => {
     if (entryItem && isOpen) {
       const fetchFullEntry = async () => {
-        const token = localStorage.getItem('token');
         try {
-          const res = await fetch(`${import.meta.env.VITE_API_URL}/entries/${entryItem.id}/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/entries/${entryItem.id}/`);
           if (res.ok) {
             const data = await res.json();
             setFormData({
@@ -210,7 +207,6 @@ export default function EntryFormModal({ isOpen, entryItem, onClose, onSuccess, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const token = localStorage.getItem('token');
 
     const url = entryItem ? `${import.meta.env.VITE_API_URL}/entries/${entryItem.id}/` : `${import.meta.env.VITE_API_URL}/entries/`;
     const method = entryItem ? 'PATCH' : 'POST';
@@ -235,7 +231,7 @@ export default function EntryFormModal({ isOpen, entryItem, onClose, onSuccess, 
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 

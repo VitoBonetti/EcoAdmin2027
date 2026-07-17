@@ -45,7 +45,6 @@ export default function CustomerFormModal({ isOpen, customer, onClose, onSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const token = localStorage.getItem('token');
 
     const url = customer ? `${import.meta.env.VITE_API_URL}/customers/${customer.id}` : `${import.meta.env.VITE_API_URL}/customers/`;
     const method = customer ? 'PATCH' : 'POST';
@@ -53,7 +52,7 @@ export default function CustomerFormModal({ isOpen, customer, onClose, onSuccess
     try {
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 

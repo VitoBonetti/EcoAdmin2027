@@ -108,11 +108,10 @@ export default function Descriptions() {
   };
 
   const handleBulkDelete = async () => {
-    const token = localStorage.getItem('token');
     const toastId = toast.loading('Deleting descriptions...');
     try {
       await Promise.all(deleteIds.map(id =>
-        fetch(`${import.meta.env.VITE_API_URL}/costs/descriptions/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }})
+        fetch(`${import.meta.env.VITE_API_URL}/costs/descriptions/${id}`, { method: 'DELETE'})
       ));
       toast.success(`${deleteIds.length} description(s) deleted`, { id: toastId });
       setDescriptions(prev => prev.filter(d => !deleteIds.includes(d.id)));

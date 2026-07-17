@@ -10,11 +10,8 @@ export default function MyCompany() {
 
   const fetchCompany = useCallback(async () => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/mycompany/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/mycompany/`);
       if (response.ok) {
         const data = await response.json();
         // Since it returns a list, take the first one if it exists

@@ -43,7 +43,6 @@ export default function CompanyFormModal({ isOpen, company, onClose, onSuccess }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const token = localStorage.getItem('token');
 
     // Uses the /mycompany endpoint
     const url = company ? `${import.meta.env.VITE_API_URL}/mycompany/${company.id}` : `${import.meta.env.VITE_API_URL}/mycompany/`;
@@ -52,7 +51,7 @@ export default function CompanyFormModal({ isOpen, company, onClose, onSuccess }
     try {
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 

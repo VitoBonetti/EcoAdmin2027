@@ -26,11 +26,8 @@ export default function EntryViewModal({ isOpen, entryId, initialTab = 'details'
 
     const fetchDetails = async () => {
       setIsLoading(true);
-      const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/entries/${entryId}/`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/entries/${entryId}/`);
         if (res.ok) {
           setData(await res.json());
         } else {
@@ -51,10 +48,7 @@ export default function EntryViewModal({ isOpen, entryId, initialTab = 'details'
     if (!data?.entry) return;
     const toastId = toast.loading('Generating preview...');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/entries/${data.entry.id}/pdf`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/entries/${data.entry.id}/pdf`);
       if (!response.ok) throw new Error();
 
       const blob = await response.blob();

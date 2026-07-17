@@ -18,11 +18,8 @@ export default function DescriptionFormModal({ isOpen, descriptionItem, onClose,
   useEffect(() => {
     if (isOpen) {
       const fetchCategories = async () => {
-        const token = localStorage.getItem('token');
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/costs/categories/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/costs/categories/`);
           if (response.ok) {
             const data = await response.json();
             setCategories(data);
@@ -57,7 +54,6 @@ export default function DescriptionFormModal({ isOpen, descriptionItem, onClose,
     }
 
     setIsLoading(true);
-    const token = localStorage.getItem('token');
 
     const url = descriptionItem
       ? `${import.meta.env.VITE_API_URL}/costs/descriptions/${descriptionItem.id}`
@@ -67,7 +63,7 @@ export default function DescriptionFormModal({ isOpen, descriptionItem, onClose,
     try {
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 

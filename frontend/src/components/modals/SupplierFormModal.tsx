@@ -66,7 +66,6 @@ export default function SupplierFormModal({ isOpen, supplier, onClose, onSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const token = localStorage.getItem('token');
 
     const url = supplier ? `${import.meta.env.VITE_API_URL}/suppliers/${supplier.id}` : `${import.meta.env.VITE_API_URL}/suppliers/`;
     const method = supplier ? 'PATCH' : 'POST';
@@ -74,7 +73,7 @@ export default function SupplierFormModal({ isOpen, supplier, onClose, onSuccess
     try {
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 

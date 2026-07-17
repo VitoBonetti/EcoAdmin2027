@@ -45,11 +45,8 @@ export default function CostFormModal({ isOpen, costItem, onClose, onSuccess }: 
   useEffect(() => {
     if (isOpen) {
       const fetchCategories = async () => {
-        const token = localStorage.getItem('token');
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/costs/categories/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/costs/categories/`);
           if (response.ok) setCategories(await response.json());
         } catch (error) {
           toast.error('Failed to load categories');
@@ -63,11 +60,8 @@ export default function CostFormModal({ isOpen, costItem, onClose, onSuccess }: 
     if (formData.category_id) {
       const fetchDescriptions = async () => {
         setIsFetchingDesc(true);
-        const token = localStorage.getItem('token');
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/costs/categories/${formData.category_id}/descriptions/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/costs/categories/${formData.category_id}/descriptions/`);
           if (response.ok) {
             const data = await response.json();
             setDescriptions(data);
@@ -130,7 +124,6 @@ export default function CostFormModal({ isOpen, costItem, onClose, onSuccess }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const token = localStorage.getItem('token');
 
     const url = costItem ? `${import.meta.env.VITE_API_URL}/costs/${costItem.id}` : `${import.meta.env.VITE_API_URL}/costs/`;
     const method = costItem ? 'PATCH' : 'POST';
@@ -149,7 +142,7 @@ export default function CostFormModal({ isOpen, costItem, onClose, onSuccess }: 
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 

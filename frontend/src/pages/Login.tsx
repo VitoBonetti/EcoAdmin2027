@@ -31,7 +31,10 @@ export default function Login() {
       if (!response.ok) throw new Error('Invalid credentials');
 
       const data = await response.json();
-      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('isAuthenticated', 'true');
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
       navigate('/dashboard');
     } catch (err) {
       setError('Failed to login. Please check your credentials.');

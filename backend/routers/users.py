@@ -1,7 +1,6 @@
 from os import access
-
-from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -15,27 +14,36 @@ from jose import JWTError, jwt
 router = APIRouter(prefix="/users")
 
 
-@router.post("/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(),
-          db: Session = Depends(get_db)):
+@router.post("/login")
+def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(OAuth2PasswordRequestForm), db: Session = Depends(get_db)):
+
     user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password", headers={"WWW-Authenticate": "Bearer"})
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
 
     access_token = auth.create_access_token(data={"sub": str(user.id)})
-    return {"access_token": access_token, "token_type": "bearer"}
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,  # Blocks JavaScript from reading it
+        secure=False,  # True in prd
+        samesite="lax",  # Protects against CSRF attacks
+        max_age=86400
+    )
+    return {"message": "Successfully logged in", "user": {"id": user.id, "name": user.name, "email": user.email}}
 
 
 @router.post("/logout")
 def logout(
-        token: str = Depends(auth.oauth2_scheme),
+        response: Response, # <-- Inject Response to delete the cookie
+        token: str = Depends(auth.get_token_from_cookie), # <-- Read from the cookie, not the header!
         db: Session = Depends(get_db)
 ):
     try:
+        # 1. Keep your existing logic to blocklist the token in the database
         payload = jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
         jti = payload.get("jti")
         exp = payload.get("exp")
-
 
         expires_at = datetime.fromtimestamp(exp, tz=timezone.utc)
 
@@ -46,7 +54,10 @@ def logout(
     except JWTError:
         pass
 
-    return {"message": "Successfully logged out. Token has been revoked server-side."}
+    # 2. Tell the user's browser to physically delete the HttpOnly cookie
+    response.delete_cookie(key="access_token", httponly=True, samesite="lax")
+
+    return {"message": "Successfully logged out. Token has been revoked server-side and cookie deleted."}
 
 
 @router.post("/users", response_model=UserModelResponse, status_code=status.HTTP_201_CREATED)

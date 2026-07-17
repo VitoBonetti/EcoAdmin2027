@@ -26,7 +26,6 @@ export default function CategoryFormModal({ isOpen, categoryItem, onClose, onSuc
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const token = localStorage.getItem('token');
 
     // Using the categories endpoints defined in costs.py
     const url = categoryItem
@@ -37,7 +36,7 @@ export default function CategoryFormModal({ isOpen, categoryItem, onClose, onSuc
     try {
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 

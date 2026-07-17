@@ -51,18 +51,23 @@ export default function Sidebar() {
   }, []);
 
   const handleLogout = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        await fetch(`${import.meta.env.VITE_API_URL}/users/logout`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-      } catch (err) {}
-    }
-    localStorage.removeItem('token');
+  try {
+    // 1. Tell the server to blocklist the token and delete the HttpOnly cookie.
+    // Notice we don't need headers—the browser attaches the cookie automatically!
+    await fetch(`${import.meta.env.VITE_API_URL}/users/logout`, {
+      method: 'POST',
+    });
+  } catch (err) {
+    console.error("Failed to notify backend of logout:", err);
+  } finally {
+    // 2. Clear the new flags we set during login
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('user');
+
+    // 3. Kick them back to the login screen
     navigate('/login');
-  };
+  }
+};
 
   const toggleMenu = (menuName: string) => {
     setOpenMenu(openMenu === menuName ? null : menuName);

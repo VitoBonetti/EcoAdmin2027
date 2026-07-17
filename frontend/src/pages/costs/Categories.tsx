@@ -25,11 +25,8 @@ export default function Categories() {
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/costs/categories/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/costs/categories/`);
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
@@ -78,11 +75,10 @@ export default function Categories() {
   };
 
   const handleBulkDelete = async () => {
-    const token = localStorage.getItem('token');
     const toastId = toast.loading('Deleting categories...');
     try {
       await Promise.all(deleteIds.map(id =>
-        fetch(`${import.meta.env.VITE_API_URL}/costs/categories/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }})
+        fetch(`${import.meta.env.VITE_API_URL}/costs/categories/${id}`, { method: 'DELETE'})
       ));
       toast.success(`${deleteIds.length} category(s) deleted`, { id: toastId });
       setCategories(prev => prev.filter(c => !deleteIds.includes(c.id)));

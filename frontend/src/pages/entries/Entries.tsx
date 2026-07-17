@@ -39,11 +39,8 @@ export default function Entries() {
 
   useEffect(() => {
     const fetchOptions = async () => {
-      const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/entries/form-options/`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/entries/form-options/`);
         if (res.ok) {
           const data = await res.json();
           setCustomers(data.customers || []);
@@ -66,7 +63,6 @@ export default function Entries() {
 
   const fetchEntries = useCallback(async () => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
     let endpoint = '/entries/';
     if (activeTab === 'invoices') endpoint = '/entries/invoices/';
     else if (activeTab === 'quotations') endpoint = '/entries/quotations/';
@@ -74,9 +70,7 @@ export default function Entries() {
     else if (activeTab === 'archived') endpoint = '/entries/archived/';
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`);
       if (response.ok) {
         setEntries(await response.json());
       }
@@ -146,12 +140,9 @@ export default function Entries() {
   };
 
   const handleDownloadPDF = async (id: string, ref: string) => {
-    const token = localStorage.getItem('token');
     const toastId = toast.loading('Generating PDF...');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/entries/${id}/pdf`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/entries/${id}/pdf`);
       if (!response.ok) throw new Error();
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -168,11 +159,9 @@ export default function Entries() {
   };
 
   const handleToggleArchive = async (id: string) => {
-    const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/entries/${id}/archive-state/`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}` }
+        method: 'PATCH'
       });
       if (response.ok) fetchEntries();
     } catch (err) {
@@ -181,13 +170,11 @@ export default function Entries() {
   };
 
   const handleBulkExport = async () => {
-    const token = localStorage.getItem('token');
     const toastId = toast.loading('Exporting selection to Excel...');
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/entries/export/bulk/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ ids: selectedIds })

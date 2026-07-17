@@ -34,11 +34,8 @@ export default function Customers() {
   // 1. Fetch Customers
   const fetchCustomers = useCallback(async () => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/customers/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/customers/`);
       if (response.ok) {
         const data = await response.json();
         setCustomers(data);
@@ -117,14 +114,12 @@ export default function Customers() {
   };
 
   const handleBulkDelete = async () => {
-    const token = localStorage.getItem('token');
     const toastId = toast.loading('Deleting customers...');
     try {
       // Loop deletes (since backend doesn't have a bulk delete endpoint)
       await Promise.all(deleteIds.map(id =>
         fetch(`${import.meta.env.VITE_API_URL}/customers/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
+          method: 'DELETE'
         })
       ));
       toast.success(`${deleteIds.length} customer(s) deleted`, { id: toastId });

@@ -29,11 +29,8 @@ export default function Suppliers() {
 
   const fetchSuppliers = useCallback(async () => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/suppliers/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/suppliers/`);
       if (response.ok) {
         const data = await response.json();
         setSuppliers(data);
@@ -91,11 +88,10 @@ export default function Suppliers() {
   };
 
   const handleBulkDelete = async () => {
-    const token = localStorage.getItem('token');
     const toastId = toast.loading('Deleting suppliers...');
     try {
       await Promise.all(deleteIds.map(id =>
-        fetch(`${import.meta.env.VITE_API_URL}/suppliers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }})
+        fetch(`${import.meta.env.VITE_API_URL}/suppliers/${id}`, { method: 'DELETE'})
       ));
       toast.success(`${deleteIds.length} supplier(s) deleted`, { id: toastId });
       setSuppliers(prev => prev.filter(s => !deleteIds.includes(s.id)));

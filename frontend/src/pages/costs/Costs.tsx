@@ -128,11 +128,10 @@ export default function Costs() {
   };
 
   const handleBulkDelete = async () => {
-    const token = localStorage.getItem('token');
     const toastId = toast.loading('Deleting entries...');
     try {
       await Promise.all(deleteIds.map(id =>
-        fetch(`${import.meta.env.VITE_API_URL}/costs/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }})
+        fetch(`${import.meta.env.VITE_API_URL}/costs/${id}`, { method: 'DELETE'})
       ));
       toast.success(`${deleteIds.length} entry(s) deleted`, { id: toastId });
       fetchData(); // Refetch to update the dashboard totals

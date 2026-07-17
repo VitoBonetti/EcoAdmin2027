@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 import bcrypt
 from jose import JWTError, jwt
@@ -42,8 +42,17 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
+def get_token_from_cookie(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # Strip the "Bearer " prefix before returning
+    return token.replace("Bearer ", "") if "Bearer " in token else token
+
+
 def get_current_user(
-        token: Annotated[str, Depends(oauth2_scheme)],
+        token: str = Depends(get_token_from_cookie),
         db: Session = Depends(get_db)
 ) -> UserModel:
     credentials_exception = HTTPException(
