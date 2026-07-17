@@ -169,6 +169,8 @@ def delete_entry(entry_id: UUID, db: Session = Depends(get_db)):
     db_entries = db.query(EntryModel).filter(EntryModel.id == entry_id).first()
     if not db_entries:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
+    db.delete(db_entries)
+    db.commit()
 
 
 # --- patch endpoints ---

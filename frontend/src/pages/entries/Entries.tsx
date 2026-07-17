@@ -21,7 +21,7 @@ export default function Entries() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'invoices'; // 'all', 'invoices', 'quotations', 'commissions', 'archived'
+  const activeTab = searchParams.get('tab') || 'all'; // 'all', 'invoices', 'quotations', 'commissions', 'archived'
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const sortCol = searchParams.get('sort') || 'date';
   const sortDir = searchParams.get('dir') || 'desc';
@@ -215,7 +215,7 @@ export default function Entries() {
       {/* Toolbar & Tabs */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-md p-2 rounded-xl border border-white dark:border-gray-800 shadow-sm">
         <div className="flex bg-gray-100/50 dark:bg-gray-800/50 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
-          {['invoices', 'quotations', 'commissions', 'all', 'archived'].map((tab) => (
+          {['all', 'invoices', 'quotations', 'commissions', 'archived'].map((tab) => (
             <button key={tab} onClick={() => updateParams({ tab, page: '1' })} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize whitespace-nowrap ${activeTab === tab ? 'bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}>
               {tab}
             </button>
