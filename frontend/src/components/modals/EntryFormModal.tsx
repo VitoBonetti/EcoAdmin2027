@@ -14,6 +14,20 @@ const InputField = ({ label, value, onChange, type = 'text', required = false, p
   </div>
 );
 
+// Drop this near the top of your file, outside the main component
+const ToggleSwitch = ({ label, checked, onChange, colorClass = "peer-checked:bg-blue-600" }: { label: string, checked: boolean, onChange: (checked: boolean) => void, colorClass?: string }) => (
+  <label className="relative inline-flex items-center cursor-pointer select-none">
+    <input
+      type="checkbox"
+      className="sr-only peer"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+    />
+    <div className={`w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 ${colorClass}`}></div>
+    <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
+  </label>
+);
+
 export default function EntryFormModal({ isOpen, entryItem, onClose, onSuccess, customers = [], suppliers = [], companies = [] }: any) {
   const currentMonth = new Date().getMonth();
   const currentQuarter = Math.floor((currentMonth + 3) / 3);
@@ -433,14 +447,18 @@ export default function EntryFormModal({ isOpen, entryItem, onClose, onSuccess, 
                   <textarea rows={3} value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none text-sm dark:text-white resize-none" />
                 </div>
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={formData.is_paid} onChange={(e) => setFormData({...formData, is_paid: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500 bg-gray-100 border-gray-300" />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mark as Paid</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={formData.is_archived} onChange={(e) => setFormData({...formData, is_archived: e.target.checked})} className="rounded text-amber-500 focus:ring-amber-500 bg-gray-100 border-gray-300" />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Archived</span>
-                  </label>
+                  <ToggleSwitch
+                    label="Mark as Paid"
+                    checked={formData.is_paid}
+                    onChange={(checked) => setFormData({ ...formData, is_paid: checked })}
+                    colorClass="peer-checked:bg-green-500"
+                  />
+                  <ToggleSwitch
+                    label="Mark as Archived"
+                    checked={formData.is_archived}
+                    onChange={(checked) => setFormData({ ...formData, is_archived: checked })}
+                    colorClass="peer-checked:bg-orange-500"
+                  />
                 </div>
               </div>
 

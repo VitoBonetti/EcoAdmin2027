@@ -42,7 +42,6 @@ export default function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="suppliers" element={<Suppliers />} />
           <Route path="company" element={<MyCompany />} />
-          <Route path="users" element={<DummyPage title="Users Management" />} />
           <Route path="profile" element={<DummyPage title="Edit Profile" />} />
         </Route>
 
