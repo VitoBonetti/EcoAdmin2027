@@ -364,11 +364,11 @@ class EntryModelResponse(EntryModelBase):
         from_attributes = True
 
 class UnityChoisesSchema(str, Enum):
-    M2 = "M2"
-    ML = "ML"
-    BX = "BX"
-    ST = "ST"
-    FG = "FG"
+    M2 = "m2"
+    ML = "ml"
+    BX = "bx"
+    ST = "st"
+    FG = "fg"
 
 class EntryProductModelBase(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
@@ -376,7 +376,7 @@ class EntryProductModelBase(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     quantity: Optional[Decimal] = Decimal('0')
-    unity: UnityChoisesSchema = UnityChoisesSchema.M2
+    unity: str = "M2"
     unity_price: Optional[Decimal] = Decimal('0')
     discount: Optional[Decimal] = Decimal('0')
     total: Optional[Decimal] = Decimal('0')
@@ -385,14 +385,15 @@ class EntryProductModelCreate(EntryProductModelBase):
     pass
 
 class EntryProductModelUpdate(BaseModel):
-    entry_id: Optional[UUID]
-    name: Optional[str]
-    description: Optional[str]
-    quantity: Optional[Decimal]
-    unity: Optional[UnityChoisesSchema]
-    unity_price: Optional[Decimal]
-    discount: Optional[Decimal]
-    total: Optional[Decimal]
+    id: Optional[UUID] = None
+    entry_id: Optional[UUID] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    quantity: Optional[Decimal] = None
+    unity: Optional[str] = None
+    unity_price: Optional[Decimal] = None
+    discount: Optional[Decimal] = None
+    total: Optional[Decimal] = None
 
 class EntryProductModelResponse(EntryProductModelBase):
     id: UUID

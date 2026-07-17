@@ -33,6 +33,9 @@ def calculate_entry_math(entry_data: dict, products_data: list[dict]) -> tuple[d
         entry_data['btw_total'] = Decimal('0.0')
         entry_data['final_total'] = no_btw_total
         entry_data['temp_no_btw_total'] = no_btw_total
+
+        return entry_data, products_data
+
     elif entry_data.get('is_quotation') or entry_data.get('is_invoice'):
         # Calculate transport
         t_gross = int(entry_data.get('transport_gross', 0) or 0)
@@ -107,6 +110,8 @@ def create_entry_transaction(db: Session, entry_in: dict, products_in: list[dict
     db.flush()
 
     for product in products_data:
+        if 'unity' in product and isinstance(product['unity'], str):
+            product['unity'] = product['unity'].upper()
         new_product = EntryProductsModel(id=uuid.uuid4(), **product, entry_id=new_entry.id)
         db.add(new_product)
 
@@ -124,8 +129,28 @@ def update_entry_transaction(db: Session, entry_id: str, entry_in: dict, product
     if not db_entry:
         return None
 
+    # If the payload says this is now an invoice, but it doesn't have an invoice number yet...
+    if entry_in.get('is_invoice') and not db_entry.invoice_reference and not entry_in.get('invoice_reference'):
+        current_year_str = str(datetime.now().year)
+
+        # Safely get the last invoice number, lock the row, and increment
+        last_entry = db.query(EntryModel.invoice_reference) \
+            .filter(EntryModel.invoice_reference.startswith(f"INV{current_year_str}")) \
+            .order_by(desc(EntryModel.invoice_reference)) \
+            .with_for_update() \
+            .first()
+
+        last_inv = last_entry[0] if last_entry else None
+
+        # Split safely handles the format (e.g. INV2026-001 -> 1)
+        last_inv_number = int(last_inv.split('-')[-1]) if last_inv else 0
+        entry_in['invoice_reference'] = f"INV{current_year_str}-{str(last_inv_number + 1).zfill(3)}"
+
     # Update the parent entry's basic fields
     for key, value in entry_in.items():
+        if key != 'id':
+            if key == 'unity' and isinstance(value, str):
+                value = value.upper()
         setattr(db_entry, key, value)
 
     # Handle Nested Products (if they are provided in the payload)
@@ -148,6 +173,9 @@ def update_entry_transaction(db: Session, entry_id: str, entry_in: dict, product
                 # Apply updates to the model
                 for k, v in prod_data.items():
                     if k != 'id':
+                        # FORCE UPPERCASE STRICTLY FOR POSTGRES
+                        if k == 'unity' and v is not None:
+                            v = str(v).upper()
                         setattr(db_prod, k, v)
 
                 # Convert back to dict for the math calculator
@@ -179,6 +207,8 @@ def update_entry_transaction(db: Session, entry_id: str, entry_in: dict, product
         # Add the brand new products to the DB
         for calc_prod in calculated_products:
             if 'id' not in calc_prod:  # Only the newly added ones won't have IDs yet
+                if 'unity' in calc_prod and isinstance(calc_prod['unity'], str):
+                    calc_prod['unity'] = calc_prod['unity'].upper()
                 new_db_prod = EntryProductsModel(id=uuid.uuid4(), **calc_prod, entry_id=db_entry.id)
                 db.add(new_db_prod)
 

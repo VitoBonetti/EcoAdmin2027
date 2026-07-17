@@ -216,24 +216,25 @@ def get_entry_detail(entry_id: UUID, db: Session = Depends(get_db)):
     """
     Returns the Entry, nested Products, and all calculated context data.
     """
-    # Fetch the entry and instantly join the related products to avoid N+1 queries
-    entry = db.query(EntryModel).options(joinedload(EntryModel.entry_products)).filter(EntryModel.id == entry_id).first()
+    # Fetch Entry directly
+    entry = db.query(EntryModel).filter(EntryModel.id == entry_id).first()
     if not entry:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
 
-    # btw_calc
+    # Fetch Products directly (Sidesteps relationship naming errors)
+    products = db.query(EntryProductsModel).filter(EntryProductsModel.entry_id == entry_id).all()
+
+    #  (str() casting prevents Float/Decimal collision errors)
     btw_calc = Decimal('0.0')
     if not entry.is_commission:
-        btw_total = entry.final_total if entry.final_total is not None else Decimal('0')
-        no_btw_total = entry.temp_no_btw_total if entry.temp_no_btw_total is not None else Decimal('0')
+        btw_total = Decimal(str(entry.final_total)) if entry.final_total is not None else Decimal('0')
+        no_btw_total = Decimal(str(entry.temp_no_btw_total)) if entry.temp_no_btw_total is not None else Decimal('0')
         btw_calc = btw_total - no_btw_total
 
-    # discount
     total_discount = Decimal('0.0')
     if entry.discount and entry.discount > 0:
-        # Fallbacks to Decimal('0') ensure to don't crash if a field is None
-        calc_btw_total = entry.btw_total or Decimal('0')
-        calc_discount = entry.btw_total_discount or Decimal('0')
+        calc_btw_total = Decimal(str(entry.btw_total)) if entry.btw_total is not None else Decimal('0')
+        calc_discount = Decimal(str(entry.btw_total_discount)) if entry.btw_total_discount is not None else Decimal('0')
         total_discount = calc_btw_total - calc_discount
 
     # construct the transport dictionary
@@ -253,12 +254,11 @@ def get_entry_detail(entry_id: UUID, db: Session = Depends(get_db)):
         "algemene_offerte": ALGEMENE_OFFERTE,
         "algemene_invoice": ALGEMENE_INVOICE,
         "algemene_commission": ALGEMENE_COMMISSION,
-        # "footer_text": FOOTER_TEXT,
     }
 
     return {
         "entry": entry,
-        "products": entry.entry_products,
+        "products": products, # Use the direct products query array
         "btw_calc": btw_calc,
         "total_discount": total_discount,
         "transport": transport,

@@ -211,9 +211,11 @@ export default function EntryFormModal({ isOpen, entryItem, onClose, onSuccess, 
       if (!payload.company_id) payload.company_id = null;
       if (!payload.overdue_date) payload.overdue_date = null;
 
-      // Do not send auto-generated references back to the server
-      delete payload.invoice_reference;
-      delete payload.quotation_reference;
+      // Only delete auto-generated references if we are CREATING a new entry
+      if (!entryItem) {
+        delete payload.invoice_reference;
+        delete payload.quotation_reference;
+      }
 
       payload.quarter_reference = String(payload.quarter_reference);
 
