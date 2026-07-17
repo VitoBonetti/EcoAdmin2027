@@ -6,7 +6,7 @@ from uuid import UUID
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List, Optional
-from fastapi import HTTPException, APIRouter, Depends, status, Query, Request
+from fastapi import HTTPException, APIRouter, Depends, status, Query, Request, Body
 from fastapi.responses import Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
@@ -456,6 +456,63 @@ def export_entries_excel(entry_type: str, db: Session = Depends(get_db)):
     filename = f"{entry_type}_export_{timestamp}.xlsx"
 
     # Stream the buffer directly to the client
+    return StreamingResponse(
+        stream,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+@router.post("/export/bulk/")
+def export_bulk_entries_excel(ids: List[UUID] = Body(embed=True), db: Session = Depends(get_db)):
+    """
+    Exports a specific selection of entries to an Excel file.
+    """
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Bulk Export"
+
+    headers = [
+        "Invoice Ref", "Quotation Ref", "Customer/Supplier", "Date",
+        "Overdue Date", "Total No BTW (€)", "Total (€)", "Type", "Is Paid"
+    ]
+    ws.append(headers)
+
+    # Fetch only the selected IDs
+    entries = db.query(EntryModel).options(
+        joinedload(EntryModel.customer),
+        joinedload(EntryModel.supplier)
+    ).filter(EntryModel.id.in_(ids)).order_by(desc(EntryModel.date)).all()
+
+    for entry in entries:
+        invoice_ref = entry.invoice_reference if entry.invoice_reference else "N/A"
+        quotation_ref = entry.quotation_reference if entry.quotation_reference else "N/A"
+        cust_sup = entry.supplier.name if entry.is_commission and entry.supplier else (
+            entry.customer.name if entry.customer else "N/A")
+
+        if entry.is_commission:
+            type_entry = "Commission"
+        elif entry.is_quotation and not entry.is_invoice:
+            type_entry = "Quotation"
+        else:
+            type_entry = "Invoice"
+
+        is_paid = "Paid" if entry.is_paid else "Not Paid"
+
+        row = [
+            invoice_ref, quotation_ref, cust_sup, entry.date,
+            entry.overdue_date, entry.no_btw_total, entry.final_total,
+            type_entry, is_paid
+        ]
+        ws.append(row)
+
+    stream = io.BytesIO()
+    wb.save(stream)
+    stream.seek(0)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"bulk_export_{timestamp}.xlsx"
+
     return StreamingResponse(
         stream,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

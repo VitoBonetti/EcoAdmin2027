@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, ArrowUpDown, Check, ChevronLeft, ChevronRight, FileText, Download, Archive, ArrowUpRight, Eye } from 'lucide-react';
+import { Plus, Search, Edit2, ArrowUpDown, Check, ChevronLeft, ChevronRight, FileText, Download, Archive, Share2, Eye, FileSearch, FileSpreadsheet } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import ConfirmModal from '../../components/modals/ConfirmModal';
 import EntryFormModal from '../../components/modals/EntryFormModal';
 import EntryViewModal from '../../components/modals/EntryViewModal';
 
@@ -20,12 +19,12 @@ export default function Entries() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [viewEntryId, setViewEntryId] = useState<string | null>(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
+  const [quarterFilter, setQuarterFilter] = useState('');
+
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'all'; // 'all', 'invoices', 'quotations', 'commissions', 'archived'
+  const activeTab = searchParams.get('tab') || 'all';
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const sortCol = searchParams.get('sort') || 'date';
   const sortDir = searchParams.get('dir') || 'desc';
@@ -33,9 +32,11 @@ export default function Entries() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [formEntry, setFormEntry] = useState<any | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [deleteIds, setDeleteIds] = useState<string[]>([]);
 
-  // 1. Fetch Lookup Maps (Customers & Suppliers) ONCE on mount
+  const [viewEntryId, setViewEntryId] = useState<string | null>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewInitialTab, setViewInitialTab] = useState<'details' | 'preview'>('details');
+
   useEffect(() => {
     const fetchOptions = async () => {
       const token = localStorage.getItem('token');
@@ -45,10 +46,9 @@ export default function Entries() {
         });
         if (res.ok) {
           const data = await res.json();
-          console.log("FORM OPTIONS LOADED:", data);
           setCustomers(data.customers || []);
           setSuppliers(data.suppliers || []);
-          setCompanies(data.companies || []); // NEW: Save companies
+          setCompanies(data.companies || []);
         }
       } catch (err) {
         console.error("Failed to load options");
@@ -60,12 +60,13 @@ export default function Entries() {
   const custMap = useMemo(() => customers.reduce((acc, c) => ({ ...acc, [c.id]: c.name }), {}), [customers]);
   const suppMap = useMemo(() => suppliers.reduce((acc, s) => ({ ...acc, [s.id]: s.name }), {}), [suppliers]);
 
-  // 2. Fetch Entries based on the Active Tab
+  // Derived arrays for dropdowns
+  const availableYears = useMemo(() => Array.from(new Set(entries.map(e => e.year_reference).filter(Boolean))).sort((a, b) => b - a), [entries]);
+  const availableQuarters = ['1', '2', '3', '4'];
+
   const fetchEntries = useCallback(async () => {
     setIsLoading(true);
     const token = localStorage.getItem('token');
-
-    // Map the UI tab to the correct backend endpoint
     let endpoint = '/entries/';
     if (activeTab === 'invoices') endpoint = '/entries/invoices/';
     else if (activeTab === 'quotations') endpoint = '/entries/quotations/';
@@ -78,14 +79,12 @@ export default function Entries() {
       });
       if (response.ok) {
         setEntries(await response.json());
-      } else {
-        toast.error('Failed to load entries');
       }
     } catch (error) {
       toast.error('Network error');
     } finally {
       setIsLoading(false);
-      setSelectedIds([]); // Clear selections when changing tabs
+      setSelectedIds([]);
     }
   }, [activeTab]);
 
@@ -99,24 +98,40 @@ export default function Entries() {
     setSearchParams(params);
   };
 
-  // 3. Filter & Sort Logic
   const filteredEntries = entries.filter(entry => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    const entityName = entry.is_commission
-      ? (suppMap[entry.supplier_id]?.toLowerCase() || '')
-      : (custMap[entry.customer_id]?.toLowerCase() || '');
+    // 1. Search Filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const entityName = entry.is_commission ? (suppMap[entry.supplier_id]?.toLowerCase() || '') : (custMap[entry.customer_id]?.toLowerCase() || '');
+      if (!entry.invoice_reference?.toLowerCase().includes(term) && !entry.quotation_reference?.toLowerCase().includes(term) && !entityName.includes(term)) {
+        return false;
+      }
+    }
+    // 2. Year Filter
+    if (yearFilter && entry.year_reference?.toString() !== yearFilter) return false;
+    // 3. Quarter Filter
+    if (quarterFilter && entry.quarter_reference !== quarterFilter) return false;
 
-    return (
-      entry.invoice_reference?.toLowerCase().includes(term) ||
-      entry.quotation_reference?.toLowerCase().includes(term) ||
-      entityName.includes(term)
-    );
+    return true;
   });
 
   const sortedEntries = [...filteredEntries].sort((a, b) => {
-    let valA = a[sortCol] || '';
-    let valB = b[sortCol] || '';
+    let valA, valB;
+    if (sortCol === 'reference') {
+      valA = (a.is_quotation && !a.is_invoice ? a.quotation_reference : a.invoice_reference) || '';
+      valB = (b.is_quotation && !b.is_invoice ? b.quotation_reference : b.invoice_reference) || '';
+    } else if (sortCol === 'client') {
+      valA = (a.is_commission ? suppMap[a.supplier_id] : custMap[a.customer_id]) || '';
+      valB = (b.is_commission ? suppMap[b.supplier_id] : custMap[b.customer_id]) || '';
+    } else if (sortCol === 'status') {
+      const getScore = (e: any) => e.is_paid ? 3 : (e.overdue_date && new Date(e.overdue_date) < new Date() ? 1 : 2);
+      valA = getScore(a);
+      valB = getScore(b);
+    } else {
+      valA = a[sortCol] || '';
+      valB = b[sortCol] || '';
+    }
+
     if (valA < valB) return sortDir === 'asc' ? -1 : 1;
     if (valA > valB) return sortDir === 'asc' ? 1 : -1;
     return 0;
@@ -130,7 +145,6 @@ export default function Entries() {
     else updateParams({ sort: col, dir: 'asc' });
   };
 
-  // 4. Actions: PDF, Archive, Delete
   const handleDownloadPDF = async (id: string, ref: string) => {
     const token = localStorage.getItem('token');
     const toastId = toast.loading('Generating PDF...');
@@ -139,7 +153,6 @@ export default function Entries() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error();
-
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -161,29 +174,37 @@ export default function Entries() {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (response.ok) {
-        toast.success('Archive state updated');
-        fetchEntries(); // Refetch the current tab
-      }
+      if (response.ok) fetchEntries();
     } catch (err) {
       toast.error('Failed to update archive state');
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkExport = async () => {
     const token = localStorage.getItem('token');
-    const toastId = toast.loading('Deleting entries...');
+    const toastId = toast.loading('Exporting selection to Excel...');
     try {
-      await Promise.all(deleteIds.map(id =>
-        fetch(`${import.meta.env.VITE_API_URL}/entries/${id}/`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }})
-      ));
-      toast.success(`${deleteIds.length} entry(s) deleted`, { id: toastId });
-      fetchEntries();
-      setSelectedIds([]);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/entries/export/bulk/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ids: selectedIds })
+      });
+      if (!response.ok) throw new Error();
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bulk_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success('Export downloaded', { id: toastId });
+      setSelectedIds([]); // clear selection after export
     } catch (err) {
-      toast.error('Failed to delete entries', { id: toastId });
-    } finally {
-      setDeleteIds([]);
+      toast.error('Failed to export selected items', { id: toastId });
     }
   };
 
@@ -204,8 +225,6 @@ export default function Entries() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-20 max-w-7xl mx-auto">
-
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Documents & Entries</h1>
@@ -216,9 +235,10 @@ export default function Entries() {
         </button>
       </div>
 
-      {/* Toolbar & Tabs */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-md p-2 rounded-xl border border-white dark:border-gray-800 shadow-sm">
-        <div className="flex bg-gray-100/50 dark:bg-gray-800/50 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
+      <div className="flex flex-col xl:flex-row gap-4 justify-between items-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-md p-2 rounded-xl border border-white dark:border-gray-800 shadow-sm">
+
+        {/* Document Tabs */}
+        <div className="flex bg-gray-100/50 dark:bg-gray-800/50 p-1 rounded-lg w-full xl:w-auto overflow-x-auto">
           {['all', 'invoices', 'quotations', 'commissions', 'archived'].map((tab) => (
             <button key={tab} onClick={() => updateParams({ tab, page: '1' })} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize whitespace-nowrap ${activeTab === tab ? 'bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}>
               {tab}
@@ -226,29 +246,37 @@ export default function Entries() {
           ))}
         </div>
 
-        <div className="flex gap-2 w-full md:w-auto">
-          <a href={`${import.meta.env.VITE_API_URL}/entries/export/${activeTab === 'all' ? 'entries' : activeTab}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors">
-            <Download size={16} /> Export
-          </a>
-          <div className="flex items-center bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-1.5 flex-1 max-w-xs border border-gray-200 dark:border-gray-700">
+        {/* Filters and Search */}
+        <div className="flex flex-wrap md:flex-nowrap gap-2 w-full xl:w-auto">
+
+          <select value={yearFilter} onChange={(e) => { setYearFilter(e.target.value); updateParams({ page: '1' }); }} className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-2.5 py-1.5 outline-none">
+            <option value="">All Years</option>
+            {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+
+          <select value={quarterFilter} onChange={(e) => { setQuarterFilter(e.target.value); updateParams({ page: '1' }); }} className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-2.5 py-1.5 outline-none">
+            <option value="">All Quarters</option>
+            {availableQuarters.map(q => <option key={q} value={q}>{q}</option>)}
+          </select>
+
+          <div className="flex items-center bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-1.5 flex-1 md:w-64 border border-gray-200 dark:border-gray-700">
             <Search size={18} className="text-gray-400 shrink-0" />
-            <input type="text" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); updateParams({ page: '1' }); }} placeholder="Search reference or client..." className="bg-transparent border-none outline-none w-full px-2 text-sm text-gray-700 dark:text-gray-200" />
+            <input type="text" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); updateParams({ page: '1' }); }} placeholder="Search..." className="bg-transparent border-none outline-none w-full px-2 text-sm text-gray-700 dark:text-gray-200" />
           </div>
         </div>
       </div>
 
-      {/* Data Table */}
       <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl rounded-2xl shadow-sm border border-white/80 dark:border-gray-800/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-800">
               <tr>
                 <th className="px-4 py-4 w-12"><SexyCheckbox checked={paginatedEntries.length > 0 && selectedIds.length === paginatedEntries.length} onChange={(e) => setSelectedIds(e.target.checked ? paginatedEntries.map(c => c.id) : [])} /></th>
-                <th className="px-4 py-4 font-medium">Reference</th>
+                <th className="px-4 py-4 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('reference')}>Reference <ArrowUpDown size={12} className="inline ml-1 opacity-50" /></th>
                 <th className="px-4 py-4 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('date')}>Date <ArrowUpDown size={12} className="inline ml-1 opacity-50" /></th>
-                <th className="px-4 py-4 font-medium">Client / Supplier</th>
+                <th className="px-4 py-4 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('client')}>Client / Supplier <ArrowUpDown size={12} className="inline ml-1 opacity-50" /></th>
                 <th className="px-4 py-4 font-medium text-right cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('final_total')}>Total <ArrowUpDown size={12} className="inline ml-1 opacity-50" /></th>
-                <th className="px-4 py-4 font-medium text-center">Status</th>
+                <th className="px-4 py-4 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('status')}>Status <ArrowUpDown size={12} className="inline ml-1 opacity-50" /></th>
                 <th className="px-4 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -256,7 +284,7 @@ export default function Entries() {
               {isLoading ? (
                 <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-400">Loading documents...</td></tr>
               ) : paginatedEntries.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-400">No entries found for this tab.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-400">No entries found.</td></tr>
               ) : (
                 paginatedEntries.map((entry) => (
                   <tr key={entry.id} className={`hover:bg-white/50 dark:hover:bg-gray-800/30 transition-colors group ${selectedIds.includes(entry.id) ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}>
@@ -282,9 +310,11 @@ export default function Entries() {
                     </td>
                     <td className="px-4 py-4 text-right">
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => { setViewInitialTab('preview'); setViewEntryId(entry.id); setIsViewOpen(true); }} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="Quick PDF Preview"><FileSearch size={16} /></button>
+                        <button onClick={() => { setViewInitialTab('details'); setViewEntryId(entry.id); setIsViewOpen(true); }} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="View Details"><Eye size={16} /></button>
+                        <button onClick={() => { setFormEntry(entry); setIsFormOpen(true); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="Edit Entry"><Edit2 size={16} /></button>
                         <button onClick={() => handleDownloadPDF(entry.id, entry.invoice_reference || entry.quotation_reference)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="Download PDF"><Download size={16} /></button>
                         <button onClick={() => handleToggleArchive(entry.id)} className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-gray-800 rounded-lg tooltip" title={entry.is_archived ? "Unarchive" : "Archive"}><Archive size={16} /></button>
-                        <button onClick={() => { setViewEntryId(entry.id); setIsViewOpen(true); }} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-gray-800 rounded-lg tooltip" title="View Details"><Eye size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -309,21 +339,23 @@ export default function Entries() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900/90 dark:bg-white/90 backdrop-blur-xl text-white dark:text-gray-900 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6 animate-fade-in z-40">
           <span className="font-semibold text-sm">{selectedIds.length} selected</span>
           <div className="h-5 w-px bg-gray-700 dark:bg-gray-300"></div>
-          <button onClick={() => setDeleteIds(selectedIds)} className="flex items-center gap-2 text-sm font-medium hover:text-red-400 dark:hover:text-red-600 transition-colors px-2 py-1"><Trash2 size={16} /> Delete</button>
+
+          <button onClick={handleBulkExport} className="flex items-center gap-2 text-sm font-medium hover:text-green-400 dark:hover:text-green-600 transition-colors px-2 py-1">
+            <FileSpreadsheet size={16} /> Export Selected
+          </button>
+
+          <button onClick={() => toast("Share feature coming soon!", { icon: '🚧' })} className="flex items-center gap-2 text-sm font-medium hover:text-blue-400 dark:hover:text-blue-600 transition-colors px-2 py-1">
+              <Share2 size={16} /> Share
+            </button>
+
+          <button onClick={() => { selectedIds.forEach(id => handleToggleArchive(id)); setSelectedIds([]); toast.success('Archive state toggled'); }} className="flex items-center gap-2 text-sm font-medium hover:text-amber-400 dark:hover:text-amber-600 transition-colors px-2 py-1">
+            <Archive size={16} /> Toggle Archive
+          </button>
         </div>
       )}
 
-      <ConfirmModal isOpen={deleteIds.length > 0} title={deleteIds.length > 1 ? "Bulk Delete" : "Delete Entry"} message={`Are you sure you want to delete ${deleteIds.length} document(s)?`} onConfirm={handleBulkDelete} onClose={() => setDeleteIds([])} />
       <EntryFormModal isOpen={isFormOpen} entryItem={formEntry} onClose={() => setIsFormOpen(false)} onSuccess={fetchEntries} customers={customers} suppliers={suppliers} companies={companies} />
-      <EntryViewModal
-        isOpen={isViewOpen}
-        entryId={viewEntryId}
-        onClose={() => setIsViewOpen(false)}
-        onEdit={(entryData) => {
-          setFormEntry(entryData);
-          setIsFormOpen(true);
-        }}
-      />
+      <EntryViewModal isOpen={isViewOpen} entryId={viewEntryId} initialTab={viewInitialTab} onClose={() => setIsViewOpen(false)} onEdit={(entryData) => { setFormEntry(entryData); setIsFormOpen(true); }} />
     </div>
   );
 }
