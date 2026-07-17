@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from datetime import datetime, timedelta
 from decimal import Decimal
+import uuid
 from models.entries import EntryModel, EntryProductsModel
 
 
@@ -29,7 +30,7 @@ def calculate_entry_math(entry_data: dict, products_data: list[dict]) -> tuple[d
 
     # commission logic
     if entry_data.get('is_commission'):
-        entry_data['btw_total'] = no_btw_total
+        entry_data['btw_total'] = Decimal('0.0')
         entry_data['final_total'] = no_btw_total
         entry_data['temp_no_btw_total'] = no_btw_total
     elif entry_data.get('is_quotation') or entry_data.get('is_invoice'):
@@ -88,13 +89,15 @@ def create_entry_transaction(db: Session, entry_in: dict, products_in: list[dict
 
     # quotation reference
     if entry_data.get('is_quotation') and not entry_data.get('quotation_reference'):
-        last_qtn = db.query(func.max(EntryModel.quotation_reference)).filter(EntryModel.quotation_reference.startswith(f"QTN{current_year_str}")).with_for_update().scalar()
+        last_qtn_ref = db.query(EntryModel.quotation_reference).filter(EntryModel.quotation_reference.startswith(f"QTN{current_year_str}")).order_by(desc(EntryModel.quotation_reference)).with_for_update().first()
+        last_qtn = last_qtn_ref[0] if last_qtn_ref else None
         last_qtn_number = int(last_qtn.split('-')[-1]) if last_qtn else 0
         entry_data['quotation_reference'] = f"QTN{current_year_str}-{str(last_qtn_number + 1).zfill(3)}"
 
     # invoice reference
     if (entry_data.get('is_invoice') or (entry_data.get('is_commission') and not entry_data.get('is_quotation'))) and not entry_data.get('invoice_reference'):
-        last_inv = db.query(func.max(EntryModel.invoice_reference)).filter(EntryModel.invoice_reference.startswith(f"INV{current_year_str}")).with_for_update().scalar()
+        last_inv_ref = db.query(EntryModel.invoice_reference).filter(EntryModel.invoice_reference.startswith(f"INV{current_year_str}")).order_by(desc(EntryModel.invoice_reference)).with_for_update().first()
+        last_inv = last_inv_ref[0] if last_inv_ref else None
         last_inv_number = int(last_inv[8:]) if last_inv else 0
         entry_data['invoice_reference'] = f"INV{current_year_str}-{str(last_inv_number + 1).zfill(3)}"
 
@@ -104,7 +107,7 @@ def create_entry_transaction(db: Session, entry_in: dict, products_in: list[dict
     db.flush()
 
     for product in products_data:
-        new_product = EntryProductsModel(**product, entry_id=new_entry.id)
+        new_product = EntryProductsModel(id=uuid.uuid4(), **product, entry_id=new_entry.id)
         db.add(new_product)
 
     db.commit()
@@ -176,7 +179,7 @@ def update_entry_transaction(db: Session, entry_id: str, entry_in: dict, product
         # Add the brand new products to the DB
         for calc_prod in calculated_products:
             if 'id' not in calc_prod:  # Only the newly added ones won't have IDs yet
-                new_db_prod = EntryProductsModel(**calc_prod, entry_id=db_entry.id)
+                new_db_prod = EntryProductsModel(id=uuid.uuid4(), **calc_prod, entry_id=db_entry.id)
                 db.add(new_db_prod)
 
     # commit the transaction

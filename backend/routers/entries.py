@@ -2,8 +2,8 @@ import weasyprint
 import io
 import os
 import openpyxl
-from datetime import datetime
 from uuid import UUID
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List, Optional
 from fastapi import HTTPException, APIRouter, Depends, status, Query, Request
@@ -163,6 +163,54 @@ def get_archived_invoices(db: Session = Depends(get_db)):
     return archived_quotations
 
 
+# -- delete endpoints ---
+@router.delete("/{entry_id}/", status_code=status.HTTP_204_NO_CONTENT)
+def delete_entry(entry_id: UUID, db: Session = Depends(get_db)):
+    db_entries = db.query(EntryModel).filter(EntryModel.id == entry_id).first()
+    if not db_entries:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
+
+
+# --- patch endpoints ---
+@router.patch("/{entry_id}/archive-state/", response_model=EntryModelResponse)
+def toggle_archive_entry(entry_id: UUID, db: Session = Depends(get_db)):
+    db_entry = db.query(EntryModel).filter(EntryModel.id == entry_id).first()
+    if not db_entry:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
+
+    db_entry.is_archived = not db_entry.is_archived
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry
+
+
+
+# --- Create/update entries endpoints ---
+@router.get("/form-options/", response_model=EntryFormDataResponse)
+def get_entry_form_options(db: Session = Depends(get_db)):
+    """
+    give React with all the active entities needed to populate dropdowns.
+    """
+    companies = db.query(MyCompanyModel).filter(MyCompanyModel.is_active == True).all()
+    customers = db.query(CustomerModel).filter(CustomerModel.is_active == True).all()
+    suppliers = db.query(SupplierModel).filter(SupplierModel.is_active == True).all()
+
+    return {
+        "companies": companies,
+        "customers": customers,
+        "suppliers": suppliers
+    }
+
+
+@router.get("/loading_addresses/", response_model=List[LoadingAddressResponse])
+def get_loading_addresses(supplier_id: Optional[UUID] = Query(None, description="Filter addresses by supplier"),db: Session = Depends(get_db)):
+    base_query = db.query(LoadingAddressModel)
+    if supplier_id:
+        base_query = base_query.filter(LoadingAddressModel.supplier_id == supplier_id)
+    addresses = base_query.all()
+    return addresses
+
+
 @router.get("/{entry_id}/", response_model=EntryDetailContextResponse)
 def get_entry_detail(entry_id: UUID, db: Session = Depends(get_db)):
     """
@@ -218,70 +266,27 @@ def get_entry_detail(entry_id: UUID, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/loading_addresses/", response_model=List[LoadingAddressResponse])
-def get_loading_addresses(supplier_id: Optional[UUID] = Query(None, description="Filter addresses by supplier"),db: Session = Depends(get_db)):
-    base_query = db.query(LoadingAddressModel)
-    if supplier_id:
-        base_query = base_query.filter(LoadingAddressModel.supplier_id == supplier_id)
-    addresses = base_query.all()
-    return addresses
-
-
-# -- delete endpoints ---
-@router.delete("/{entry_id}/", status_code=status.HTTP_204_NO_CONTENT)
-def delete_entry(entry_id: UUID, db: Session = Depends(get_db)):
-    db_entries = db.query(EntryModel).filter(EntryModel.id == entry_id).first()
-    if not db_entries:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
-
-
-# --- patch endpoints ---
-@router.patch("/{entry_id}/archive-state/", response_model=EntryModelResponse)
-def toggle_archive_entry(entry_id: UUID, db: Session = Depends(get_db)):
-    db_entry = db.query(EntryModel).filter(EntryModel.id == entry_id).first()
-    if not db_entry:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
-
-    db_entry.is_archived = not db_entry.is_archived
-    db.commit()
-    db.refresh(db_entry)
-    return db_entry
-
-
-
-# --- Create/update entries endpoints ---
-@router.get("/form-options/", response_model=EntryFormDataResponse)
-def get_entry_form_options(db: Session = Depends(get_db)):
-    """
-    give React with all the active entities needed to populate dropdowns.
-    """
-    companies = db.query(MyCompanyModel).filter(MyCompanyModel.is_active == True).all()
-    customers = db.query(CustomerModel).filter(CustomerModel.is_active == True).all()
-    suppliers = db.query(SupplierModel).filter(SupplierModel.is_active == True).all()
-
-    return {
-        "companies": companies,
-        "customers": customers,
-        "suppliers": suppliers
-    }
-
 
 @router.post("/", response_model=EntryModelResponse, status_code=status.HTTP_201_CREATED)
 def create_new_entry(payload: EntryModelCreate, db: Session = Depends(get_db)):
+    if not payload.overdue_date:
+        payload.overdue_date = payload.date + timedelta(days=30)
     entry_data = payload.model_dump(exclude={'products'})
-    products_data = [p.model_dump() for p in payload.products]
+    products_data = [p.model_dump(exclude={'entry_id'}) for p in payload.products]
     new_entry = create_entry_transaction(db, entry_data, products_data)
     return new_entry
 
 
 @router.patch("/{entry_id}/", response_model=EntryModelResponse)
 def update_entry(entry_id: UUID, payload: EntryModelUpdate, db: Session = Depends(get_db)):
+    if payload.date is not None:
+        payload.overdue_date = payload.date + timedelta(days=30)
     # separate the parent payload from the nested products list
     update_data = payload.model_dump(exclude_unset=True, exclude={'products'})
     # Check if products were included in the update payload
     products_data = None
     if payload.products is not None:
-        products_data = [p.model_dump(exclude_unset=True) for p in payload.products]
+        products_data = [p.model_dump(exclude_unset=True, exclude={'entry_id'}) for p in payload.products]
     # pass to the service layer
     updated_entry = update_entry_transaction(db, str(entry_id), update_data, products_data)
     if not updated_entry:

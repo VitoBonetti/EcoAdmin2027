@@ -316,7 +316,7 @@ class EntryModelBase(BaseModel):
 
 
 class EntryModelCreate(EntryModelBase):
-    pass
+    products: List['EntryProductModelCreate'] = []
 
 
 class EntryModelUpdate(BaseModel):
@@ -355,6 +355,7 @@ class EntryModelUpdate(BaseModel):
         year_reference: Optional[int]
         quarter_reference: Optional[str]
         is_archived: Optional[bool]
+        products: Optional[List['EntryProductModelUpdate']] = None
 
 class EntryModelResponse(EntryModelBase):
     id: UUID
@@ -363,16 +364,17 @@ class EntryModelResponse(EntryModelBase):
         from_attributes = True
 
 class UnityChoisesSchema(str, Enum):
-    M2 = "m2"
-    ML = "ml"
-    BX = "bx"
-    ST = "st"
-    FG = "fg"
+    M2 = "M2"
+    ML = "ML"
+    BX = "BX"
+    ST = "ST"
+    FG = "FG"
 
 class EntryProductModelBase(BaseModel):
-    entry_id: UUID
-    name: Optional[str]
-    description: Optional[str]
+    model_config = ConfigDict(use_enum_values=True)
+    entry_id: Optional[UUID] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
     quantity: Optional[Decimal] = Decimal('0')
     unity: UnityChoisesSchema = UnityChoisesSchema.M2
     unity_price: Optional[Decimal] = Decimal('0')
@@ -380,7 +382,7 @@ class EntryProductModelBase(BaseModel):
     total: Optional[Decimal] = Decimal('0')
 
 class EntryProductModelCreate(EntryProductModelBase):
-    products: List['EntryProductModelCreate'] = []
+    pass
 
 class EntryProductModelUpdate(BaseModel):
     entry_id: Optional[UUID]

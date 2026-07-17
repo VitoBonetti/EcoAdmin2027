@@ -7,6 +7,7 @@ import MyCompany from './pages/MyCompany';
 import Categories from './pages/costs/Categories';
 import Descriptions from './pages/costs/Descriptions';
 import Costs from './pages/costs/Costs';
+import Entries from './pages/entries/Entries';
 import Layout from './components/Layout';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
@@ -37,7 +38,7 @@ export default function App() {
           <Route path="costs" element={<Costs />} />
           <Route path="costs/categories" element={<Categories />} />
           <Route path="costs/descriptions" element={<Descriptions />} />
-          <Route path="entries" element={<DummyPage title="Entries" />} />
+          <Route path="entries" element={<Entries />} />
           <Route path="customers" element={<Customers />} />
           <Route path="suppliers" element={<Suppliers />} />
           <Route path="company" element={<MyCompany />} />
