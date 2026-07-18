@@ -184,6 +184,32 @@ export default function EntryFormModal({ isOpen, entryItem, onClose, onSuccess, 
     }
   };
 
+  const handleDocumentTypeChange = (type: 'invoice' | 'quotation' | 'commission') => {
+    // 1. Calculate new dates
+    const d = new Date();
+    const nextMonth = new Date(d);
+    nextMonth.setDate(d.getDate() + 30);
+
+    const formattedToday = d.toISOString().split('T')[0];
+    const formattedOverdue = nextMonth.toISOString().split('T')[0];
+
+    // 2. Update the state with the new type AND the fresh dates
+    setFormData((prev: any) => ({
+      ...prev,
+      is_invoice: type === 'invoice',
+      is_quotation: type === 'quotation',
+      is_commission: type === 'commission',
+      // If it's a commission, clear the customer fields just like your original code did
+      ...(type === 'commission' ? { customer_id: '', loading_address: '' } : {}),
+
+      // Reset the dates to today
+      date: formattedToday,
+      overdue_date: formattedOverdue,
+      year_reference: d.getFullYear(),
+      quarter_reference: Math.floor((d.getMonth() + 3) / 3).toString()
+    }));
+  };
+
   const handleProductAdd = () => {
     setFormData({
       ...formData,
@@ -297,9 +323,27 @@ export default function EntryFormModal({ isOpen, entryItem, onClose, onSuccess, 
                 <div className="flex-1">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Document Type</label>
                   <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
-                    <button type="button" onClick={() => setFormData({ ...formData, is_invoice: true, is_quotation: false, is_commission: false })} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${formData.is_invoice ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' : 'text-gray-500'}`}>Invoice</button>
-                    <button type="button" onClick={() => setFormData({ ...formData, is_invoice: false, is_quotation: true, is_commission: false })} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${formData.is_quotation ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm' : 'text-gray-500'}`}>Quotation</button>
-                    <button type="button" onClick={() => setFormData({ ...formData, is_invoice: false, is_quotation: false, is_commission: true, customer_id: '', loading_address: '' })} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${formData.is_commission ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm' : 'text-gray-500'}`}>Commission</button>
+                    <button
+                      type="button"
+                      onClick={() => handleDocumentTypeChange('invoice')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${formData.is_invoice ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' : 'text-gray-500'}`}
+                    >
+                      Invoice
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDocumentTypeChange('quotation')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${formData.is_quotation ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm' : 'text-gray-500'}`}
+                    >
+                      Quotation
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDocumentTypeChange('commission')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${formData.is_commission ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm' : 'text-gray-500'}`}
+                    >
+                      Commission
+                    </button>
                   </div>
                 </div>
 

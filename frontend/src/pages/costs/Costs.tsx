@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, ArrowUpDown, Check, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Wallet, Download } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowUpDown, Check, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Wallet, Download, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import CostFormModal from '../../components/modals/CostFormModal';
+import CostDetailModal from '../../components/modals/CostDetailModal';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -32,6 +33,7 @@ export default function Costs() {
   const [formCost, setFormCost] = useState<any | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
+  const [viewCost, setViewCost] = useState<any | null>(null);
 
   // 1. Fetch EVERYTHING simultaneously for maximum speed
   const fetchData = useCallback(async () => {
@@ -273,8 +275,15 @@ export default function Costs() {
                     </td>
                     <td className="px-4 py-4 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => { setFormCost(cost); setIsFormOpen(true); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-lg"><Edit2 size={16} /></button>
-                        <button onClick={() => setDeleteIds([cost.id])} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-800 rounded-lg"><Trash2 size={16} /></button>
+                        <button onClick={() => setViewCost(cost)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-gray-800 rounded-lg" title="View Details">
+                          <Eye size={16} />
+                        </button>
+                        <button onClick={() => { setFormCost(cost); setIsFormOpen(true); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-lg" title="Edit">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => setDeleteIds([cost.id])} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-800 rounded-lg" title="Delete">
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -306,6 +315,13 @@ export default function Costs() {
 
       <ConfirmModal isOpen={deleteIds.length > 0} title={deleteIds.length > 1 ? "Bulk Delete" : "Delete Entry"} message={`Are you sure you want to delete ${deleteIds.length} cost entry(s)?`} onConfirm={handleBulkDelete} onClose={() => setDeleteIds([])} />
       <CostFormModal isOpen={isFormOpen} costItem={formCost} onClose={() => setIsFormOpen(false)} onSuccess={fetchData} />
+      <CostDetailModal
+        isOpen={!!viewCost}
+        cost={viewCost}
+        onClose={() => setViewCost(null)}
+        categoryMap={categoryMap}
+        descMap={descMap}
+      />
     </div>
   );
 }

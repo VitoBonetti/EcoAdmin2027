@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Wallet, FileText, Users, Truck, Building2, ShieldCheck, Sun, Moon, Monitor, LogOut, Settings } from 'lucide-react';
+import { Home, Wallet, FileText, Users, Truck, Building2, ShieldCheck, Sun, Moon, Monitor, LogOut, Settings, Percent } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 
 interface UserData {
@@ -137,6 +137,7 @@ export default function Sidebar() {
         <NavItem icon={Users} to="/customers" tooltip="Customers" />
         <NavItem icon={Truck} to="/suppliers" tooltip="Suppliers" />
         <NavItem icon={Building2} to="/company" tooltip="My Company" />
+        <NavItem icon={Percent} to="/taxes" tooltip="Taxes Overview" />
       </nav>
 
       <div className="flex flex-col items-center gap-4 w-full relative">

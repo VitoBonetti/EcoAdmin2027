@@ -277,7 +277,7 @@ export default function Entries() {
                   <tr key={entry.id} className={`hover:bg-white/50 dark:hover:bg-gray-800/30 transition-colors group ${selectedIds.includes(entry.id) ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}>
                     <td className="px-4 py-4"><SexyCheckbox checked={selectedIds.includes(entry.id)} onChange={() => setSelectedIds(prev => prev.includes(entry.id) ? prev.filter(x => x !== entry.id) : [...prev, entry.id])} /></td>
                     <td className="px-4 py-4">
-                      <div className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      <div className="font-bold text-gray-900 dark:text-white cursor-pointer hover:text-green-600 dark:hover:text-green-400 flex items-center gap-2"  onClick={() => { setViewInitialTab('details'); setViewEntryId(entry.id); setIsViewOpen(true); }}>
                         <FileText size={16} className={entry.is_quotation && !entry.is_invoice ? "text-purple-500" : entry.is_commission ? "text-orange-500" : "text-blue-500"} />
                         {entry.is_quotation && !entry.is_invoice ? entry.quotation_reference : entry.invoice_reference || 'Draft'}
                       </div>

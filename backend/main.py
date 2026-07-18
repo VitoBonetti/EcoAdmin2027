@@ -6,7 +6,7 @@ import traceback
 import os
 import time
 from jose import jwt
-from routers import users, company, costs, customers, entries, suppliers, dashboard
+from routers import users, company, costs, customers, entries, suppliers, dashboard, taxes
 from middleware.auth import get_current_user
 from database import get_db
 
@@ -48,6 +48,7 @@ app.include_router(customers.router)
 app.include_router(entries.router)
 app.include_router(suppliers.router)
 app.include_router(dashboard.router)
+app.include_router(taxes.router)
 
 
 @app.get("/api/health", include_in_schema=False)

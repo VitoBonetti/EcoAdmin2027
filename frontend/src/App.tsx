@@ -9,6 +9,7 @@ import Categories from './pages/costs/Categories';
 import Descriptions from './pages/costs/Descriptions';
 import Costs from './pages/costs/Costs';
 import Entries from './pages/entries/Entries';
+import Taxes from './pages/Taxes'
 import Layout from './components/Layout';
 // NEW: Import the Profile page we are about to create
 import Profile from './pages/Profile';
@@ -53,8 +54,7 @@ export default function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="suppliers" element={<Suppliers />} />
           <Route path="company" element={<MyCompany />} />
-
-          {/* Hook up the new Profile Page */}
+          <Route path="taxes" element={<Taxes />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 

@@ -281,18 +281,41 @@ def create_new_entry(payload: EntryModelCreate, db: Session = Depends(get_db)):
 
 @router.patch("/{entry_id}/", response_model=EntryModelResponse)
 def update_entry(entry_id: UUID, payload: EntryModelUpdate, db: Session = Depends(get_db)):
-    if payload.date is not None:
+    db_entry = db.query(EntryModel).filter(EntryModel.id == entry_id).first()
+    if not db_entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+
+    is_transition = (
+            (payload.is_quotation is not None and db_entry.is_quotation != payload.is_quotation) or
+            (payload.is_invoice is not None and db_entry.is_invoice != payload.is_invoice) or
+            (payload.is_commission is not None and db_entry.is_commission != payload.is_commission)
+    )
+
+    if is_transition:
+        # Strict Override: If a switch happens, snap to today + 30 days
+        today = datetime.now().date()
+        payload.date = today
+        payload.overdue_date = today + timedelta(days=30)
+    elif payload.date is not None:
+        # Standard Fallback: Keep the +30 days logic if they just manually changed the date
         payload.overdue_date = payload.date + timedelta(days=30)
-    # separate the parent payload from the nested products list
+
+    # Separate the parent payload from the nested products list
     update_data = payload.model_dump(exclude_unset=True, exclude={'products'})
+
     # Check if products were included in the update payload
     products_data = None
     if payload.products is not None:
         products_data = [p.model_dump(exclude_unset=True, exclude={'entry_id'}) for p in payload.products]
-    # pass to the service layer
+
+    # Pass to the service layer
     updated_entry = update_entry_transaction(db, str(entry_id), update_data, products_data)
+
+    # Note: We already checked if db_entry exists above, so the service layer should succeed,
+    # but we can leave a safety check here just in case.
     if not updated_entry:
         raise HTTPException(status_code=404, detail="Entry not found")
+
     return updated_entry
 
 
