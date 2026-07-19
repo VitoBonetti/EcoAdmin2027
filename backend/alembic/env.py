@@ -13,6 +13,7 @@ from models.customers import CustomerModel
 from models.suppliers import SupplierModel, LoadingAddressModel
 from models.company import MyCompanyModel
 from models.entries import EntryModel, EntryProductsModel
+from models.api_keys import ApiKeyModel
 
 
 print("\n--- ALEMBIC DEBUG ---")

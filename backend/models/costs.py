@@ -19,7 +19,7 @@ class DescriptionModel(Base):
     __tablename__ = "descriptions_cost"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    category_id = Column(UUID(as_uuid=True), ForeignKey('categories_cost.id'), nullable=False)
+    category_id = Column(UUID(as_uuid=True), ForeignKey('categories_cost.id', ondelete='CASCADE'), nullable=False)
     description = Column(String, nullable=False)
 
     category = relationship("CategoryModel", back_populates="descriptions")
@@ -31,8 +31,8 @@ class CostModel(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     cost_date = Column(Date, nullable=False)
-    category_id = Column(UUID(as_uuid=True), ForeignKey('categories_cost.id'), nullable=False)
-    description_id = Column(UUID(as_uuid=True), ForeignKey('descriptions_cost.id'), nullable=False)
+    category_id = Column(UUID(as_uuid=True), ForeignKey('categories_cost.id', ondelete='CASCADE'), nullable=False)
+    description_id = Column(UUID(as_uuid=True), ForeignKey('descriptions_cost.id', ondelete='CASCADE'), nullable=False)
     euro_amount = Column(Float, nullable=False)
     amount_no_btw = Column(Float, nullable=True)
     amount_btw = Column(Float, nullable=True)

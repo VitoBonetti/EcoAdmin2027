@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, APIKeyHeader
 import bcrypt
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from database import get_db
 from models.users import UserModel, TokenBlocklist
+from models.api_keys import ApiKeyModel
 import os
 import uuid
 
@@ -15,6 +16,7 @@ ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 def get_password_hash(password: str) -> str:
@@ -45,16 +47,30 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 def get_token_from_cookie(request: Request):
     token = request.cookies.get("access_token")
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        return None
 
     # Strip the "Bearer " prefix before returning
     return token.replace("Bearer ", "") if "Bearer " in token else token
 
 
-def get_current_user(
-        token: str = Depends(get_token_from_cookie),
-        db: Session = Depends(get_db)
-) -> UserModel:
+def get_current_user(request: Request, api_key: str = Depends(api_key_header), token: str = Depends(get_token_from_cookie), db: Session = Depends(get_db)) -> UserModel:
+    # API KEY CHECK (For External Access)
+    if api_key:
+        db_key = db.query(ApiKeyModel).filter(ApiKeyModel.key == api_key, ApiKeyModel.is_active == True).first()
+
+        if not db_key:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API Key")
+
+        user = db.query(UserModel).filter(UserModel.id == db_key.user_id).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+        return user
+
+    # COOKIE TOKEN CHECK (For React Frontend)
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

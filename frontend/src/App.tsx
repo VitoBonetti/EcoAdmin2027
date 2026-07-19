@@ -10,6 +10,7 @@ import Descriptions from './pages/costs/Descriptions';
 import Costs from './pages/costs/Costs';
 import Entries from './pages/entries/Entries';
 import Taxes from './pages/Taxes'
+import ApiDocs from './pages/DeveloperSettings';
 import Layout from './components/Layout';
 // NEW: Import the Profile page we are about to create
 import Profile from './pages/Profile';
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="suppliers" element={<Suppliers />} />
           <Route path="company" element={<MyCompany />} />
           <Route path="taxes" element={<Taxes />} />
+          <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 
